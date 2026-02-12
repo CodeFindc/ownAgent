@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic AI Interface</title>
+    <!-- Fonts replaced by system fonts for offline usage -->
+    <link rel="stylesheet" href="/static/style.css?v=4">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar (Optional, placeholder for future) -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">AG</div>
+                <span>Antigravity</span>
+            </div>
+            <nav class="nav-links">
+                <a href="#" class="active" id="newChatBtn">New Chat</a>
+            </nav>
+
+            <div style="margin-top: 20px; color: #a0a0b0; font-size: 0.8rem; padding-left: 16px; margin-bottom: 10px;">
+                HISTORY</div>
+            <div id="sessionList" class="nav-links" style="overflow-y: auto; flex: 1;">
+                <!-- Sessions injected here -->
+            </div>
+
+            <!-- User Profile (Bottom of Sidebar) -->
+            <div id="userProfile" style="border-top: 1px solid rgba(255,255,255,0.1); padding: 16px; display: none;">
+                <div style="font-weight: bold; margin-bottom: 5px;" id="userNameDisplay">User</div>
+                <a href="#" id="logoutBtn" style="color: #ff5c5c; font-size: 0.9rem; text-decoration: none;">Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <h1>Agent Session</h1>
+                <div class="status-indicator online"></div>
+            </header>
+
+            <div id="messages" class="messages">
+                <!-- Initial System Message -->
+                <div class="message system">
+                    <div class="avatar">AG</div>
+                    <div class="content">
+                        Hello! I am your Agent. Please login to continue.
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <textarea id="userInput" placeholder="Type your message..." rows="1"></textarea>
+                <button id="sendBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div id="loginError" style="color: #ff5c5c; margin-bottom: 10px; font-size: 0.9rem;"></div>
+                <button type="submit" class="primary-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Templates for JS to clone -->
+    <template id="msg-template-user">
+        <div class="message user">
+            <div class="content"></div>
+            <div class="avatar">You</div>
+        </div>
+    </template>
+
+    <template id="msg-template-assistant">
+        <div class="message assistant">
+            <div class="avatar">AG</div>
+            <div class="message-body">
+                <!-- Components will be appended here (Thinking, Tools, Content) -->
+            </div>
+        </div>
+    </template>
+
+    <template id="thinking-template">
+        <div class="thinking-block">
+            <div class="thinking-header">
+                <span class="icon">✨</span> Thinking Process
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="thinking-content markdown-body"></div>
+        </div>
+    </template>
+
+    <template id="tool-call-template">
+        <div class="tool-block">
+            <div class="tool-header">
+                <span class="icon">⚙️</span>
+                <span class="tool-name">Tool Name</span>
+                <span class="status">Running...</span>
+            </div>
+            <div class="tool-details">
+                <div class="tool-args"></div>
+                <div class="tool-output hidden"></div>
+            </div>
+        </div>
+    </template>
+
+    <!-- 
+        [English] Import the Marked library from the libs folder.
+        This gives us access to the 'marked.parse()' function in our JavaScript.
+        [中文说明] 从 libs 文件夹引入 Marked 库。
+        这让我们可以在 JavaScript 中使用 'marked.parse()' 函数。
+    -->
+    <script src="/static/libs/marked.min.js"></script>
+    <script src="/static/app.js?v=4"></script>
+</body>
+
+</html>
