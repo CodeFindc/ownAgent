@@ -1,0 +1,2 @@
+# ownAgent
+own agent sty
