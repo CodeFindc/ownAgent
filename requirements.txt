@@ -1,20 +1,89 @@
-# Core Dependencies
-python-dotenv
-openai
-httpx
-pydantic
+# ===========================================
+# ownAgent 依赖清单
+# Python 版本要求: 3.10+
+# ===========================================
 
-# Server Dependencies
-fastapi
-uvicorn
+# -------------------------------------------
+# 核心依赖 (Core Dependencies)
+# 这些是运行 Agent 必需的基础库
+# -------------------------------------------
 
-# Browser Automation (optional)
-playwright
+# python-dotenv: 用于从 .env 文件加载环境变量
+# 示例: from dotenv import load_dotenv; load_dotenv()
+python-dotenv>=1.0.0
 
-# Additional Utilities
-python-multipart
-loguru
-sqlalchemy
+# openai: OpenAI 官方 Python SDK，用于调用 LLM API
+# 支持流式响应、Function Calling 等功能
+# 示例: from openai import AsyncOpenAI; client = AsyncOpenAI(api_key="...")
+openai>=1.0.0
+
+# httpx: 现代化的 HTTP 客户端库，支持异步请求
+# 用于自定义 HTTP 客户端配置（如禁用 SSL 验证）
+# 示例: import httpx; client = httpx.AsyncClient(verify=False)
+httpx>=0.24.0
+
+# pydantic: 数据验证和设置管理库
+# 用于定义工具参数模型，自动生成 JSON Schema
+# 示例: class MyArgs(BaseModel): path: str = Field(..., description="文件路径")
+pydantic>=2.0.0
+
+# -------------------------------------------
+# Web 服务器依赖 (Server Dependencies)
+# 用于运行 FastAPI Web 服务
+# -------------------------------------------
+
+# fastapi: 现代高性能 Web 框架
+# 用于构建 REST API 和 SSE 流式响应
+# 示例: app = FastAPI(); @app.get("/hello") async def hello(): return {"msg": "hi"}
+fastapi>=0.100.0
+
+# uvicorn: ASGI 服务器，用于运行 FastAPI 应用
+# 示例: uvicorn.run(app, host="127.0.0.1", port=8000)
+uvicorn>=0.23.0
+
+# -------------------------------------------
+# 浏览器自动化依赖 (Browser Automation)
+# 可选依赖，用于浏览器操作功能
+# -------------------------------------------
+
+# playwright: 浏览器自动化库
+# 支持 Chromium、Firefox、WebKit 浏览器
+# 安装后需要运行: playwright install chromium
+# 示例: from playwright.async_api import async_playwright
+playwright>=1.40.0
+
+# -------------------------------------------
+# 认证和安全依赖 (Authentication & Security)
+# 用于用户认证和密码加密
+# -------------------------------------------
+
+# python-multipart: 处理 multipart/form-data 请求
+# 用于表单登录接口
+python-multipart>=0.0.6
+
+# python-jose: JWT 令牌生成和验证
+# 用于用户认证令牌
+# 示例: from jose import jwt; token = jwt.encode(payload, secret)
 python-jose>=3.3.0
+
+# passlib: 密码哈希库
+# 用于安全地存储用户密码
 passlib>=1.7.4
+
+# bcrypt: Blowfish 密码哈希算法实现
+# 注意: 版本锁定 4.0.1 以避免兼容性问题
 bcrypt==4.0.1
+
+# -------------------------------------------
+# 数据库和日志依赖 (Database & Logging)
+# -------------------------------------------
+
+# sqlalchemy: SQL 工具包和 ORM
+# 用于用户数据的持久化存储
+# 示例: from sqlalchemy import create_engine; engine = create_engine("sqlite:///auth.db")
+sqlalchemy>=2.0.0
+
+# loguru: 简单易用的日志库
+# 用于记录对话历史和调试信息
+# 示例: from loguru import logger; logger.info("消息")
+loguru>=0.7.0
