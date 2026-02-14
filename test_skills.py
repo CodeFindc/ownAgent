@@ -24,7 +24,8 @@ print("\n" + "=" * 50)
 print("Test 2: SkillsManager")
 print("=" * 50)
 
-manager = SkillsManager(loader)
+manager = SkillsManager(skills_root)
+manager.load_skills()
 
 # 测试搜索
 print("\nSearch for 'uint':")

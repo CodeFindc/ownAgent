@@ -1322,8 +1322,9 @@ if __name__ == "__main__":
     # 步骤 2: 初始化技能系统
     # 技能系统提供可扩展的任务能力
     skills_root = Path(".skills")              # 技能文件目录
-    skills_loader = SkillsLoader(skills_root)  # 技能加载器
-    skills_manager = SkillsManager(skills_loader)  # 技能管理器
+    # skills_loader = SkillsLoader(skills_root)  # 技能加载器
+    skills_manager = SkillsManager(skills_root)  # 技能管理器
+    skills_manager.load_skills()  # 加载所有技能
     
     # 步骤 3: 初始化工具执行器
     executor = ToolExecutor()

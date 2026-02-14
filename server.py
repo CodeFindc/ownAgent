@@ -276,8 +276,9 @@ def get_or_create_runtime(user_id: int, session_id: str) -> AgentRuntime:
     
     # 步骤 2: 初始化技能系统
     skills_root = Path(".skills")
-    skills_loader = SkillsLoader(skills_root)
-    skills_manager = SkillsManager(skills_loader)
+    # skills_loader = SkillsLoader(skills_root)
+    skills_manager = SkillsManager(skills_root)
+    skills_manager.load_skills()  # 加载所有技能
 
     # 步骤 3: 创建工具执行器
     executor = ToolExecutor()

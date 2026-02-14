@@ -103,6 +103,24 @@ class SkillsManager:
         # 返回加载数量
         return len(self.skills)
     
+    def get_metadata_summary(self) -> str:
+        """
+        获取所有技能的摘要信息。
+        
+        用于构建系统提示词，让 AI 知道有哪些技能可用。
+        
+        返回:
+            str: 格式化的技能列表字符串
+        """
+        if not self.skills:
+            return "No skills available."
+            
+        summary = []
+        for skill in self.skills:
+            summary.append(f"- {skill.name}: {skill.description}")
+            
+        return "\n".join(summary)
+
     def get_all_metadata(self) -> List[SkillMetadata]:
         """
         获取所有技能的元信息。
