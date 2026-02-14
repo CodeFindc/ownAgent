@@ -149,7 +149,7 @@ def update_todo_list(ctx: ToolContext, args: UpdateTodoListArgs) -> ToolResult:
     Checklist Format:
     - Use a single-level markdown checklist (no nesting or subtasks)
     - List todos in the intended execution order
-    - Status options: [ ] (pending), [x] (completed), [-] (in progress)
+    - Status options: [ ] (pending), [x] (completed)
 
     Core Principles:
     - Before updating, always confirm which todos have been completed

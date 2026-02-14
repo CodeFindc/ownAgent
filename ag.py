@@ -81,24 +81,24 @@ class LLMTransport:
     async def send_stream_request(self, messages: List[Dict], tools: List[Dict] = None):
         """返回一个异步生成器(Async Generator)，逐步产出 Chunk"""
         # 安全过滤：移除 reasoning_content 字段，防止 API 报错
-        sanitized_messages = []
-        raw_len = 0
-        sanitized_len = 0
+        # sanitized_messages = []
+        # raw_len = 0
+        # sanitized_len = 0
         
-        for msg in messages:
-            raw_len += len(str(msg))
-            msg_copy = msg.copy()
-            if "reasoning_content" in msg_copy:
-                del msg_copy["reasoning_content"]
-            sanitized_messages.append(msg_copy)
-            sanitized_len += len(str(msg_copy))
+        # for msg in messages:
+        #     raw_len += len(str(msg))
+        #     msg_copy = msg.copy()
+        #     if "reasoning_content" in msg_copy:
+        #         del msg_copy["reasoning_content"]
+        #     sanitized_messages.append(msg_copy)
+        #     sanitized_len += len(str(msg_copy))
 
-        print(f"[Token Optimization] Original Context Size: {raw_len} chars -> Sanitized: {sanitized_len} chars. (Thinking content stripped from context)")
+        # print(f"[Token Optimization] Original Context Size: {raw_len} chars -> Sanitized: {sanitized_len} chars. (Thinking content stripped from context)")
 
         try:
             stream = await self.client.chat.completions.create(
                 model=self.model,
-                messages=sanitized_messages,
+                messages=messages,
                 tools=tools,
                 tool_choice="auto" if tools else None,
                 temperature=0,
@@ -355,7 +355,7 @@ class AgentRuntime:
         self.executor = executor
         self.context = ContextManager(skills_manager=skills_manager, logger=logger, autosave_file=autosave_file)
         self.logger = logger
-        self.max_steps = 15  # 防止死循环
+        self.max_steps = 100  # 防止死循环
         
         # 初始化 ToolContext（包含 skills_manager）
         self.tool_context = ToolContext(
@@ -371,6 +371,8 @@ class AgentRuntime:
         # Clean up markdown code blocks if present
         # 1. 清理可能存在的 Markdown 代码块标记 (```json ... ```)
         clean_str = args_str.strip()
+        if not clean_str:
+             return {}
         if clean_str.startswith("```"):
             lines = clean_str.splitlines()
             if lines[0].startswith("```"):
@@ -420,9 +422,22 @@ class AgentRuntime:
         
         current_step = 0
         while current_step < self.max_steps:
+            # 准备发送的消息
+            messages_to_send = list(self.context.history)
+            
+            # 如果有 todo list，注入到上下文中
+            if self.tool_context.todos:
+                print(f"\n[DEBUG] Current Context Todos: {self.tool_context.todos}")
+                todo_str = "\n".join(self.tool_context.todos)
+                system_injection = {
+                    "role": "system", 
+                    "content": f"## Current Todo List Status\n\n{todo_str}\n\nCRITICAL INSTRUCTION: \n1. Identify the *FIRST* unchecked task (marked `[ ]`). \n2. **CHECK HISTORY**: Did you just finish this task's work (e.g., ran the command) in the last turn? \n   - **YES**: Do NOT do it again. Call `update_todo_list` IMMEDIATELY to mark it `[x]`. \n   - **NO**: Execute the task's work. Then, in the **SAME TURN**, call `update_todo_list` to mark it `[x]`.\n3. Do NOT use `[-]`. Only `[ ]` and `[x]`."
+                }
+                messages_to_send.append(system_injection)
+
             # 1. 发起流式请求
             stream = await self.transport.send_stream_request(
-                self.context.history, 
+                messages_to_send, 
                 self.executor.get_definitions()
             )
             

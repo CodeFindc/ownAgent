@@ -1,0 +1,208 @@
+{
+  "execution_timestamp": "2026-02-12T20:13:05.072944",
+  "database_path": ":memory:",
+  "total_queries": 6,
+  "successful_queries": 6,
+  "failed_queries": 0,
+  "results": [
+    {
+      "plan_name": "count_users",
+      "success": true,
+      "execution_time": 1.430511474609375e-05,
+      "result": [
+        4
+      ],
+      "column_names": [
+        "user_count"
+      ],
+      "row_count": 1
+    },
+    {
+      "plan_name": "list_users",
+      "success": true,
+      "execution_time": 2.384185791015625e-05,
+      "result": [
+        [
+          1,
+          "Alice Johnson",
+          "alice@example.com",
+          "2026-02-12 12:13:05"
+        ],
+        [
+          2,
+          "Bob Smith",
+          "bob@example.com",
+          "2026-02-12 12:13:05"
+        ],
+        [
+          3,
+          "Charlie Brown",
+          "charlie@example.com",
+          "2026-02-12 12:13:05"
+        ],
+        [
+          4,
+          "Diana Prince",
+          "diana@example.com",
+          "2026-02-12 12:13:05"
+        ]
+      ],
+      "column_names": [
+        "id",
+        "name",
+        "email",
+        "created_at"
+      ],
+      "row_count": 4
+    },
+    {
+      "plan_name": "user_order_summary",
+      "success": true,
+      "execution_time": 0.00013136863708496094,
+      "result": [
+        [
+          "Bob Smith",
+          2,
+          1699.98
+        ],
+        [
+          "Alice Johnson",
+          2,
+          1059.97
+        ],
+        [
+          "Diana Prince",
+          1,
+          149.99
+        ],
+        [
+          "Charlie Brown",
+          1,
+          38.97
+        ]
+      ],
+      "column_names": [
+        "user_name",
+        "order_count",
+        "total_spent"
+      ],
+      "row_count": 4
+    },
+    {
+      "plan_name": "top_products",
+      "success": true,
+      "execution_time": 3.600120544433594e-05,
+      "result": [
+        [
+          "Laptop",
+          "Electronics",
+          2,
+          1999.98
+        ],
+        [
+          "Smartphone",
+          "Electronics",
+          1,
+          699.99
+        ],
+        [
+          "Headphones",
+          "Electronics",
+          1,
+          149.99
+        ],
+        [
+          "Book",
+          "Education",
+          2,
+          59.98
+        ],
+        [
+          "Coffee Mug",
+          "Home",
+          3,
+          38.97
+        ]
+      ],
+      "column_names": [
+        "product_name",
+        "category",
+        "total_quantity",
+        "total_revenue"
+      ],
+      "row_count": 5
+    },
+    {
+      "plan_name": "category_revenue",
+      "success": true,
+      "execution_time": 3.62396240234375e-05,
+      "result": [
+        [
+          "Electronics",
+          3,
+          2849.96
+        ],
+        [
+          "Education",
+          1,
+          59.98
+        ],
+        [
+          "Home",
+          1,
+          38.97
+        ]
+      ],
+      "column_names": [
+        "category",
+        "product_count",
+        "total_revenue"
+      ],
+      "row_count": 3
+    },
+    {
+      "plan_name": "recent_orders",
+      "success": true,
+      "execution_time": 3.552436828613281e-05,
+      "result": [
+        [
+          "Alice Johnson",
+          "Laptop",
+          1,
+          "2026-02-12 12:13:05"
+        ],
+        [
+          "Alice Johnson",
+          "Book",
+          2,
+          "2026-02-12 12:13:05"
+        ],
+        [
+          "Bob Smith",
+          "Smartphone",
+          1,
+          "2026-02-12 12:13:05"
+        ],
+        [
+          "Charlie Brown",
+          "Coffee Mug",
+          3,
+          "2026-02-12 12:13:05"
+        ],
+        [
+          "Diana Prince",
+          "Headphones",
+          1,
+          "2026-02-12 12:13:05"
+        ]
+      ],
+      "column_names": [
+        "user_name",
+        "product_name",
+        "quantity",
+        "order_date"
+      ],
+      "row_count": 5
+    }
+  ]
+}
