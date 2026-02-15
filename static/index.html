@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agentic AI Interface</title>
     <!-- Fonts replaced by system fonts for offline usage -->
-    <link rel="stylesheet" href="/static/style.css?v=4">
+    <link rel="stylesheet" href="/static/style.css?v=5">
+    <script src="/static/i18n.js"></script>
+    <!-- Marked and Highlight.js for Markdown rendering -->
 </head>
 <script>
     window.onerror = function (msg, url, line, col, error) {
@@ -31,13 +33,18 @@
                 <span>OwnAgent</span>
             </div>
             <nav class="nav-links">
-                <a href="#" class="active" id="newChatBtn">New Chat</a>
+                <a href="/" class="active" id="navMessages" data-i18n="nav_messages">Messages</a>
+                <a href="/static/admin_users.html" id="navUsers" style="display:none;" data-i18n="nav_users">Users</a>
+                <a href="/static/admin_settings.html" id="navSettings" style="display:none;"
+                    data-i18n="nav_settings">Settings</a>
             </nav>
 
-            <div style="margin-top: 20px; color: #a0a0b0; font-size: 0.8rem; padding-left: 16px; margin-bottom: 10px;">
-                HISTORY</div>
-            <div id="sessionList" class="nav-links" style="overflow-y: auto; flex: 1;">
-                <!-- Sessions injected here -->
+            <div class="session-header">
+                <span data-i18n="history">HISTORY</span>
+                <button class="new-chat-btn" id="newChatBtn" data-i18n="new_chat">New Chat</button>
+            </div>
+            <div class="session-list" id="sessionList">
+                <!-- Sessions will be loaded here -->
             </div>
 
 
@@ -51,13 +58,13 @@
 
                 <!-- Dropdown Menu -->
                 <div class="user-dropdown" id="userDropdown">
-                    <a href="/static/profile.html" class="dropdown-item">My Profile</a>
-                    <a href="/static/admin_users.html" class="dropdown-item" id="navAdminUsers"
-                        style="display:none;">User Management</a>
+                    <a href="/static/profile.html" class="dropdown-item" data-i18n="user_profile">My Profile</a>
+                    <a href="/static/admin_users.html" class="dropdown-item" id="navAdminUsers" style="display:none;"
+                        data-i18n="user_management">User Management</a>
                     <a href="/static/admin_settings.html" class="dropdown-item" id="navAdminSettings"
-                        style="display:none;">Platform Settings</a>
+                        style="display:none;" data-i18n="platform_settings">Platform Settings</a>
                     <div class="dropdown-divider"></div>
-                    <a href="#" id="logoutBtn" class="dropdown-item danger">Logout</a>
+                    <a href="#" id="logoutBtn" class="dropdown-item danger" data-i18n="logout">Logout</a>
                 </div>
             </div>
         </aside>
@@ -65,7 +72,7 @@
         <!-- Main Chat Area -->
         <main class="chat-area">
             <header class="chat-header">
-                <h1>Agent Session</h1>
+                <h1 data-i18n="chat_header">Agent Session</h1>
                 <div class="status-indicator online"></div>
             </header>
 
@@ -80,7 +87,8 @@
             </div>
 
             <div class="input-area">
-                <textarea id="userInput" placeholder="Type your message..." rows="1"></textarea>
+                <textarea id="userInput" placeholder="Type your message..." rows="1"
+                    data-i18n-placeholder="type_message"></textarea>
                 <button id="sendBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="22" y1="2" x2="11" y2="13"></line>

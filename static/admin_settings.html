@@ -6,92 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Settings - OwnAgent</title>
     <link rel="stylesheet" href="/static/style.css?v=5">
-    <style>
-        .settings-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .settings-section {
-            background: rgba(30, 30, 40, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-dim);
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            color: var(--text-main);
-            font-size: 1rem;
-        }
-
-        /* Toggle Switch */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked+.slider {
-            background-color: var(--primary-color);
-        }
-
-        input:focus+.slider {
-            box-shadow: 0 0 1px var(--primary-color);
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(26px);
-        }
-    </style>
+    <script src="/static/i18n.js"></script>
 </head>
 
 <body>
@@ -103,9 +18,9 @@
                 <span id="logoText">OwnAgent</span>
             </div>
             <nav class="nav-links">
-                <a href="/" id="navMessages">Messages</a>
-                <a href="/static/admin_users.html" id="navUsers">Users</a>
-                <a href="#" class="active">Settings</a>
+                <a href="/" id="navMessages" data-i18n="nav_messages">Messages</a>
+                <a href="/static/admin_users.html" id="navUsers" data-i18n="nav_users">Users</a>
+                <a href="#" class="active" data-i18n="nav_settings">Settings</a>
             </nav>
             <div id="userProfile" class="user-profile-area">
                 <div class="user-avatar" id="userAvatar">U</div>
@@ -115,13 +30,13 @@
                 </div>
                 <!-- Dropdown Menu -->
                 <div class="user-dropdown" id="userDropdown">
-                    <a href="/static/profile.html" class="dropdown-item">My Profile</a>
-                    <a href="/static/admin_users.html" class="dropdown-item" id="navAdminUsers"
-                        style="display:none;">User Management</a>
-                    <a href="/static/admin_settings.html" class="dropdown-item" id="navAdminSettings"
-                        style="display:none;">Platform Settings</a>
+                    <a href="/static/profile.html" class="dropdown-item" data-i18n="user_profile">My Profile</a>
+                    <a href="/static/admin_users.html" class="dropdown-item" id="navAdminUsers" style="display:none;"
+                        data-i18n="user_management">User Management</a>
+                    <a href="/static/admin_settings.html" class="dropdown-item active" id="navAdminSettings"
+                        style="display:none;" data-i18n="platform_settings">Platform Settings</a>
                     <div class="dropdown-divider"></div>
-                    <a href="#" id="logoutBtn" class="dropdown-item danger">Logout</a>
+                    <a href="#" id="logoutBtn" class="dropdown-item danger" data-i18n="logout">Logout</a>
                 </div>
             </div>
         </aside>
@@ -129,32 +44,43 @@
         <!-- Main Content -->
         <main class="chat-area" style="padding: 20px; overflow-y: auto;">
             <header class="chat-header">
-                <h1>Platform Settings</h1>
+                <h1 data-i18n="platform_settings_header">Platform Settings</h1>
             </header>
 
             <div class="settings-container">
                 <div class="settings-section">
-                    <h2>General Settings</h2>
+                    <h2 data-i18n="general_settings">General Settings</h2>
                     <form id="settingsForm">
                         <div class="form-group">
-                            <label for="site_name">Site Name</label>
+                            <label for="site_name" data-i18n="site_name">Site Name</label>
                             <input type="text" id="site_name" name="site_name" placeholder="OwnAgent">
                         </div>
                         <div class="form-group">
-                            <label for="site_logo_text">Logo Text (Short)</label>
+                            <label for="site_logo_text" data-i18n="logo_text">Logo Text (Short)</label>
                             <input type="text" id="site_logo_text" name="site_logo_text" placeholder="AG">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="system_language" data-i18n="system_language">System Language</label>
+                            <select id="system_language" name="language" onchange="window.setLanguage(this.value)"
+                                style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-main); font-size: 1rem; outline: none;">
+                                <option value="en">English</option>
+                                <option value="cn">简体中文</option>
+                            </select>
                         </div>
 
                         <div class="form-group"
                             style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
-                            <label for="allow_registration" style="margin:0;">Allow User Registration</label>
+                            <label for="allow_registration" style="margin:0;" data-i18n="allow_registration">Allow User
+                                Registration</label>
                             <label class="switch">
                                 <input type="checkbox" id="allow_registration">
                                 <span class="slider round"></span>
                             </label>
                         </div>
 
-                        <button type="submit" class="primary-btn" style="margin-top: 20px;">Save Settings</button>
+                        <button type="submit" class="primary-btn" style="margin-top: 20px;"
+                            data-i18n="save_settings">Save Settings</button>
                     </form>
                     <div id="messageBox" style="margin-top: 15px;"></div>
                 </div>
@@ -180,12 +106,20 @@
                 const res = await authFetch('/auth/settings');
                 const settings = res || [];
                 settings.forEach(s => {
-                    const el = document.getElementById(s.key);
-                    if (el) {
-                        if (el.type === 'checkbox') {
-                            el.checked = (s.value === 'true');
-                        } else {
-                            el.value = s.value;
+                    if (s.key === 'language') {
+                        // Apply language setting immediately if found
+                        if (window.setLanguage) window.setLanguage(s.value);
+                        const langSelect = document.getElementById('system_language');
+                        if (langSelect) langSelect.value = s.value;
+                    }
+                    else {
+                        const el = document.getElementById(s.key);
+                        if (el) {
+                            if (el.type === 'checkbox') {
+                                el.checked = (s.value === 'true');
+                            } else {
+                                el.value = s.value;
+                            }
                         }
                     }
                 });
@@ -203,6 +137,10 @@
                 const updates = [];
 
                 for (let [key, value] of data.entries()) {
+                    // Update Language immediately if changed
+                    if (key === 'language') {
+                        setLanguage(value);
+                    }
                     updates.push(authFetch('/auth/settings', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -220,13 +158,15 @@
 
                 try {
                     await Promise.all(updates);
-                    msgBox.textContent = "Settings saved successfully! Refresh to see changes.";
+                    msgBox.textContent = "Settings saved!";
                     msgBox.style.color = "var(--success)";
-                    // Update current page logo immediately
-                    const newText = document.getElementById('site_logo_text').value;
-                    const newName = document.getElementById('site_name').value;
-                    if (newText) document.getElementById('logoIcon').textContent = newText;
-                    if (newName) document.getElementById('logoText').textContent = newName;
+
+                    // Update Logo Immediately if changed
+                    const siteName = document.getElementById('site_name').value;
+                    const siteLogoText = document.getElementById('site_logo_text').value;
+
+                    if (siteName) document.getElementById('logoText').textContent = siteName;
+                    if (siteLogoText) document.getElementById('logoIcon').textContent = siteLogoText;
 
                 } catch (err) {
                     console.error(err);

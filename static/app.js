@@ -33,8 +33,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeSessionId = null;
 
     // --- Initialization ---
-    // 1. Load System Settings (Logo)
+    // 1. Load System Settings (Logo) & Language
     loadSystemSettings();
+
+    // Init i18n
+    if (typeof applyTranslations === 'function') {
+        const savedLang = localStorage.getItem('app_language');
+        if (savedLang) setLanguage(savedLang);
+    }
 
     // 2. Check Auth
     if (accessToken) {
@@ -121,12 +127,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Welcome message if no chat history
-        if (!activeSessionId && messagesContainer) {
+        if (!activeSessionId && messagesContainer) { // Added guard for messagesContainer
             messagesContainer.innerHTML = `
             <div class="message system">
                 <div class="avatar">AG</div>
                 <div class="content">
-                    Hello ${user.username}! Create a new chat to start.
+                    ${(window.t ? window.t('type_message') : 'Hello')} ${user.username}! ${(window.t ? window.t('create_user') : 'Create a new chat')}?
                 </div>
             </div>`;
         }
@@ -204,11 +210,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadSessions() {
         try {
+            console.log("[DEBUG] Fetching sessions...");
             const data = await authFetch('/sessions');
+            console.log("[DEBUG] Sessions data:", data);
+
             const sessions = data.sessions || [];
 
             // Set active session if not set locally but provided by server
             if (!activeSessionId && data.current_session_id) {
+                console.log("[DEBUG] Setting active session from server:", data.current_session_id);
                 activeSessionId = data.current_session_id;
             }
 
@@ -216,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionListEl.innerHTML = '';
 
                 if (sessions.length === 0) {
-                    sessionListEl.innerHTML = '<div style="padding:10px; color:#666; font-size:0.9em; text-align:center;">No history</div>';
+                    sessionListEl.innerHTML = `<div style="padding:10px; color:#666; font-size:0.9em; text-align:center;">${window.t ? window.t('no_history') : 'No history'}</div>`;
                     return;
                 }
 
@@ -253,11 +263,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Inline Delete Confirmation
                     const deleteBtn = document.createElement('div');
                     deleteBtn.className = 'context-menu-item danger delete-btn';
-                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.textContent = window.t ? window.t('delete') : 'Delete';
                     deleteBtn.onclick = (e) => {
                         e.stopPropagation();
-                        if (deleteBtn.textContent === 'Delete') {
-                            deleteBtn.textContent = 'Confirm?';
+                        // Check against translated text or original
+                        const delText = window.t ? window.t('delete') : 'Delete';
+                        if (deleteBtn.textContent === delText) {
+                            deleteBtn.textContent = window.t ? window.t('delete_confirm_short') : 'Confirm?';
                             deleteBtn.style.background = 'var(--error)';
                             deleteBtn.style.color = 'white';
                         } else {
@@ -318,20 +330,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function createNewSession() {
         try {
+            console.log("[DEBUG] Requesting new session...");
             const data = await authFetch('/sessions/new', { method: 'POST' });
+            console.log("[DEBUG] New session created:", data);
+            // Auto switch to it
+            activeSessionId = data.id;
+
             // Clear UI
             messagesContainer.innerHTML = `
                 <div class="message system">
                     <div class="avatar">AG</div>
                     <div class="content">
-                        Hello ${currentUser ? currentUser.username : ''}! Ready for a new task.
+                        ${(window.t ? window.t('type_message') : 'Hello')} ${currentUser ? currentUser.username : ''}! ${(window.t ? window.t('new_session_welcome') : 'Ready for a new task.')}
                     </div>
                 </div>`;
             // Refresh list
-            loadSessions();
-
-            // Auto switch to it
-            activeSessionId = data.id;
+            await loadSessions();
         } catch (e) {
             console.error(e);
         }
@@ -349,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="message system">
                     <div class="avatar">AG</div>
                     <div class="content">
-                        Session deleted. Please create or select a session.
+                        ${window.t ? window.t('session_deleted') : 'Session deleted. Please create or select a session.'}
                     </div>
                 </div>`;
             }
@@ -357,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadSessions();
         } catch (e) {
             console.error(e);
+            if (!confirm(window.t ? window.t('delete_confirm') : 'Are you sure you want to delete this session?')) return;
             alert("Failed to delete session: " + e.message);
         }
     }
@@ -710,8 +725,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const template = document.getElementById(`msg-template-${role}`);
         const clone = template.content.cloneNode(true);
         const div = clone.querySelector('.message');
+        // Verify online status (mock)
+        if (window.t) {
+            document.querySelector('.user-status').innerHTML = window.t('is_active');
+        }
         if (role === 'user') {
             div.querySelector('.content').textContent = text;
+            div.querySelector('.user .avatar').textContent = window.t ? window.t('user_profile') : 'You'; // Use 'My Profile' or just 'You' key? 'You' isn't in dict. Let's use 'User' or add 'you' to dict.
+            // Actually let's use username or 'You'. Dictionary doesn't have 'you'. 
+            // Let's safe fallback.
+            div.querySelector('.user .avatar').textContent = 'You';
+            if (window.t && window.translations[window.currentLanguage].you) {
+                div.querySelector('.user .avatar').textContent = window.t('you');
+            }
+        }
+        else {
+            // Assistant
+            div.innerHTML = marked.parse(text);
+            div.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
         }
         messagesContainer.appendChild(div);
         messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
@@ -881,7 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
             footer.style.marginTop = '8px';
             footer.style.fontSize = '0.9em';
             footer.style.color = 'var(--text-dim)';
-            footer.textContent = `Custom Answer: ${answer.replace('USER ANSWER: ', '')}`;
+            footer.textContent = `${window.t ? window.t('custom_answer') : 'Custom Answer'}: ${answer.replace('USER ANSWER: ', '')}`;
             block.appendChild(footer);
         }
     }

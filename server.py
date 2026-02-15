@@ -505,7 +505,10 @@ async def list_sessions(current_user: auth_models.User = Depends(auth_deps.get_c
     prefix = f"{current_user.id}_session_"
     
     # 遍历匹配的文件
-    for f in SESSIONS_DIR.glob(f"{prefix}*.json"):
+    files = list(SESSIONS_DIR.glob(f"{prefix}*.json"))
+    print(f"[DEBUG] Listing sessions for user {current_user.id}. Found {len(files)} files.")
+    
+    for f in files:
         # 从文件名提取会话 ID
         sid = f.stem.replace(prefix, "")
         stat = f.stat()
@@ -520,6 +523,7 @@ async def list_sessions(current_user: auth_models.User = Depends(auth_deps.get_c
     
     # 获取当前活跃会话
     cur_sid = active_sessions.get(current_user.id, None)
+    print(f"[DEBUG] Current active session: {cur_sid}")
     return {"sessions": sessions, "current_session_id": cur_sid}
 
 
@@ -543,15 +547,23 @@ async def new_session(current_user: auth_models.User = Depends(auth_deps.get_cur
         4. 保存初始状态
         5. 设为活跃会话
     """
-    # 生成会话 ID：格式为 YYYYMMDD_HHMMSS
-    new_sid = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # 生成会话 ID：格式为 YYYYMMDD_HHMMSS_ffffff
+    new_sid = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    print(f"[DEBUG] Creating new session. User: {current_user.id}, SID: {new_sid}")
     
     # 初始化运行时
     runtime = await get_or_create_runtime(current_user.id, new_sid)
     runtime.context.reset()  # 重置为初始状态
     
     # 保存初始会话文件
-    runtime.context.save_history(str(get_session_path(current_user.id, new_sid)))
+    path = get_session_path(current_user.id, new_sid)
+    print(f"[DEBUG] Saving initial session to: {path.absolute()}")
+    try:
+        runtime.context.save_history(str(path))
+        print(f"[DEBUG] Session file created successfully: {path.exists()}")
+    except Exception as e:
+        print(f"[ERROR] Failed to save session file: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create session file: {str(e)}")
     
     # 设为活跃会话
     active_sessions[current_user.id] = new_sid

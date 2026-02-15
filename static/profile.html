@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile - OwnAgent</title>
     <link rel="stylesheet" href="/static/style.css?v=5">
+    <script src="/static/i18n.js"></script>
     <style>
         .profile-container {
             max-width: 600px;
@@ -103,9 +104,9 @@
                 <span id="logoText">OwnAgent</span>
             </div>
             <nav class="nav-links">
-                <a href="/" id="navMessages">Messages</a>
-                <a href="/static/admin_users.html" id="navUsers" style="display:none;">Users</a>
-                <a href="#" class="active">Profile</a>
+                <a href="/" id="navMessages" data-i18n="nav_messages">Messages</a>
+                <a href="/static/admin_users.html" id="navUsers" style="display:none;" data-i18n="nav_users">Users</a>
+                <a href="#" class="active" data-i18n="nav_profile">Profile</a>
             </nav>
             <div id="userProfile" class="user-profile-area">
                 <div class="user-avatar" id="userAvatarSidebar">U</div>
@@ -115,13 +116,13 @@
                 </div>
                 <!-- Dropdown Menu -->
                 <div class="user-dropdown" id="userDropdown">
-                    <a href="/static/profile.html" class="dropdown-item active">My Profile</a>
-                    <a href="/static/admin_users.html" class="dropdown-item" id="navAdminUsers"
-                        style="display:none;">User Management</a>
+                    <a href="/static/profile.html" class="dropdown-item active" data-i18n="user_profile">My Profile</a>
+                    <a href="/static/admin_users.html" class="dropdown-item" id="navAdminUsers" style="display:none;"
+                        data-i18n="user_management">User Management</a>
                     <a href="/static/admin_settings.html" class="dropdown-item" id="navAdminSettings"
-                        style="display:none;">Platform Settings</a>
+                        style="display:none;" data-i18n="platform_settings">Platform Settings</a>
                     <div class="dropdown-divider"></div>
-                    <a href="#" id="logoutBtn" class="dropdown-item danger">Logout</a>
+                    <a href="#" id="logoutBtn" class="dropdown-item danger" data-i18n="logout">Logout</a>
                 </div>
             </div>
         </aside>
@@ -129,54 +130,55 @@
         <!-- Main Content -->
         <main class="chat-area">
             <header class="chat-header">
-                <h1>My Profile</h1>
+                <h1 data-i18n="my_profile_header">My Profile</h1>
             </header>
 
-            <div class="profile-container">
-                <div class="profile-card">
-                    <div class="avatar-upload" onclick="document.getElementById('avatarInput').click()">
-                        <div class="avatar-preview" id="avatarPreview">U</div>
-                        <img id="avatarImage" class="avatar-preview" style="display:none;" />
-                        <div class="avatar-overlay">Change</div>
-                        <input type="file" id="avatarInput" hidden accept="image/*">
+            <div class="settings-container">
+                <div class="settings-section">
+                    <div class="avatar-upload-container">
+                        <div class="avatar-upload" onclick="document.getElementById('avatarInput').click()">
+                            <div class="avatar-preview" id="avatarPreview">U</div>
+                            <img id="avatarImage" class="avatar-preview" style="display:none;" />
+                            <div class="avatar-overlay" data-i18n="change_avatar">Change</div>
+                            <input type="file" id="avatarInput" hidden accept="image/*">
+                        </div>
                     </div>
 
                     <form id="profileForm">
                         <div class="form-group">
-                            <label>Username</label>
+                            <label data-i18n="username">Username</label>
                             <input type="text" id="username" disabled>
                         </div>
                         <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email">
+                            <label for="email" data-i18n="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="Enter your email">
                         </div>
-                        <!-- Password change could be added here later -->
-                        <button type="submit" class="primary-btn" style="width: 100%;">Save Profile Info</button>
+                        <button type="submit" class="primary-btn" data-i18n="save_profile">Save Profile Info</button>
                     </form>
 
-                    <div
-                        style="margin-top: 30px; border-top: 1px solid var(--glass-border); padding-top: 20px; text-align: left;">
-                        <h3 style="margin-bottom: 15px;">Security</h3>
-                        <form id="passwordForm">
-                            <div class="form-group">
-                                <label>Current Password</label>
-                                <input type="password" id="currentPassword" required placeholder="Current Password">
-                            </div>
-                            <div class="form-group">
-                                <label>New Password</label>
-                                <input type="password" id="newPassword" required placeholder="New Password">
-                            </div>
-                            <div class="form-group">
-                                <label>Confirm New Password</label>
-                                <input type="password" id="confirmNewPassword" required
-                                    placeholder="Confirm New Password">
-                            </div>
-                            <button type="submit" class="primary-btn warning" style="width: 100%;">Update
-                                Password</button>
-                        </form>
-                    </div>
+                    <div class="section-divider"></div>
 
-                    <div id="messageBox" style="margin-top: 15px;"></div>
+                    <div class="section-divider"></div>
+
+                    <h3 data-i18n="security">Security</h3>
+                    <form id="passwordForm" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label data-i18n="current_password">Current Password</label>
+                            <input type="password" id="currentPassword" required placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="new_password">New Password</label>
+                            <input type="password" id="newPassword" required placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="confirm_password">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" required placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="primary-btn warning" data-i18n="update_password">Update
+                            Password</button>
+                    </form>
+
+                    <div id="messageBox" style="margin-top: 20px; min-height: 24px;"></div>
                 </div>
             </div>
         </main>

@@ -1,37 +1,46 @@
 /* 
-   -------------------------------------------------------------------------
-   [CSS CLASS 1] Variables / 变量
-   We define colors and fonts here once, so we can reuse them everywhere.
-   If you want to change the theme to "Light Mode", you only need to change colors here!
-   我们在这里定义颜色和字体，这样就可以在任何地方重复使用它们。
-   如果你想把主题改成“亮色模式”，只需要在这里修改颜色即可！
-   -------------------------------------------------------------------------
+   =========================================================================
+   NEON VOID THEME - UI/UX PRO MAX
+   "Where darkness meets light."
+   =========================================================================
 */
-:root {
-    --bg-color: #0d0d12;
-    --sidebar-bg: #16161e;
-    --glass-bg: rgba(30, 30, 40, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    /* Semi-transparent white / 半透明白色 */
-    --primary-color: #7c5cff;
-    --primary-hover: #6b4bdb;
-    --text-main: #e0e0e0;
-    --text-dim: #a0a0b0;
-    --success: #3dd68c;
-    --warning: #eebb4d;
-    --error: #ff5c5c;
 
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --font-mono: "Cascadia Code", "Fira Code", Consolas, "Courier New", monospace;
+:root {
+    /* Core Palette */
+    --bg-deep: #050507;
+    --bg-secondary: #0a0a0f;
+    --primary: #7c3aed;
+    /* Violet */
+    --primary-glow: rgba(124, 58, 237, 0.5);
+    --accent: #06b6d4;
+    /* Cyan */
+    --accent-glow: rgba(6, 182, 212, 0.5);
+
+    /* Text */
+    --text-main: #ffffff;
+    --text-muted: #9ca3af;
+    --text-dim: #4b5563;
+
+    /* Glassmorphism */
+    --glass-bg: rgba(20, 20, 30, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-highlight: rgba(255, 255, 255, 0.15);
+    --backdrop-blur: 16px;
+
+    /* Status */
+    --success: #10b981;
+    --error: #ef4444;
+    --warning: #f59e0b;
+
+    /* Fonts */
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Transitions */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 
-   [CSS CLASS 2] Reset / 重置
-   Every browser adds its own default margins (white space). We remove them all here to start fresh.
-   'box-sizing: border-box' makes sizing elements much easier (padding doesn't add to width).
-   每个浏览器都会添加默认的边距。我们在这里把它们全部去掉，从零开始。
-   'box-sizing: border-box' 让调整元素大小更容易（内边距不会增加元素的宽度）。
-*/
+/* Reset & Base */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -39,84 +48,130 @@
 }
 
 body {
-    background-color: var(--bg-color);
-    /* Use variable / 使用变量 */
+    background-color: var(--bg-deep);
     color: var(--text-main);
-    font-family: var(--font-sans);
+    font-family: var(--font-main);
     height: 100vh;
-    /* 100% Viewport Height (Full Screen) / 100% 视口高度（全屏） */
     overflow: hidden;
-    /* Prevent scrolling the whole page / 防止整个页面滚动 */
+    line-height: 1.6;
+    background-image:
+        radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(6, 182, 212, 0.08), transparent 25%);
 }
 
-/* 
-   [CSS CLASS 3] Flexbox Layout / Flexbox 布局
-   This container holds Sidebar + Chat Area side-by-side.
-   这个容器把“侧边栏”和“聊天区”左右并排。
-*/
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Layout */
 .app-container {
     display: flex;
-    /* Magic command for layout / 布局的魔法命令 */
     height: 100%;
 }
 
-/* Sidebar */
-/* Sidebar / 侧边栏 */
+/* 
+   SIDEBAR 
+   Glass panel floating on the left
+*/
 .sidebar {
-    width: 260px;
-    /* Fixed width / 固定宽度 */
-    background-color: var(--sidebar-bg);
+    width: 280px;
+    background: rgba(10, 10, 15, 0.6);
+    backdrop-filter: blur(var(--backdrop-blur));
     border-right: 1px solid var(--glass-border);
     display: flex;
     flex-direction: column;
-    /* Stack items vertically top-to-bottom / 让内容从上往下垂直排列 */
-    padding: 20px;
+    padding: 24px;
+    z-index: 10;
 }
 
 .logo {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-weight: 600;
-    font-size: 1.2rem;
     margin-bottom: 40px;
-    color: var(--primary-color);
 }
 
 .logo-icon {
-    width: 32px;
-    height: 32px;
-    /* Gradient color / 渐变色 */
-    background: linear-gradient(135deg, var(--primary-color), #a28aff);
-    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 10px;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: 800;
     font-size: 14px;
-    font-weight: bold;
+    box-shadow: 0 0 15px var(--primary-glow);
 }
 
-/* Session List Item */
+.logo span {
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    background: linear-gradient(to right, #fff, #ccc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Navigation Links */
+.nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.nav-links a,
 .session-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 10px 12px;
-    margin-bottom: 4px;
-    border-radius: 8px;
-    cursor: pointer;
-    color: var(--text-dim);
-    transition: all 0.2s;
+    padding: 10px 14px;
+    color: var(--text-muted);
     text-decoration: none;
-    position: relative;
-    /* For absolute positioning of menu */
+    border-radius: 10px;
+    font-size: 0.9rem;
+    transition: all 0.2s var(--ease-out);
+    border: 1px solid transparent;
 }
 
-.session-item:hover,
-.session-item.active {
-    background: rgba(255, 255, 255, 0.05);
+.nav-links a:hover,
+.session-item:hover {
+    background: rgba(255, 255, 255, 0.03);
     color: var(--text-main);
+    transform: translateX(2px);
+}
+
+.nav-links a.active,
+.session-item.active {
+    background: rgba(124, 58, 237, 0.1);
+    border-color: rgba(124, 58, 237, 0.2);
+    color: white;
+    box-shadow: 0 0 10px rgba(124, 58, 237, 0.05);
+    /* Subtle inner glow */
+}
+
+/* Session List Specifics */
+.session-item {
+    justify-content: space-between;
+    margin-bottom: 4px;
+    position: relative;
+    cursor: pointer;
 }
 
 .session-title {
@@ -132,13 +187,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    color: var(--text-dim);
+    border-radius: 6px;
     opacity: 0;
-    /* Hidden by default */
-    transition: opacity 0.2s;
+    transition: all 0.2s;
 }
 
 .session-item:hover .session-menu-trigger {
@@ -147,125 +198,232 @@ body {
 
 .session-menu-trigger:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: var(--text-main);
+    color: white;
 }
 
-/* Session Context Menu */
+/* Context Menu */
 .session-context-menu {
     position: absolute;
     right: 0;
     top: 100%;
-    background: var(--bg-secondary);
+    width: 140px;
+    background: #111116;
     border: 1px solid var(--glass-border);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    display: none;
-    width: 120px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 100;
     overflow: hidden;
+    display: none;
+    animation: fadeIn 0.2s var(--ease-out);
 }
 
 .context-menu-item {
-    padding: 8px 12px;
+    padding: 10px 16px;
     font-size: 0.85rem;
-    color: var(--text-main);
+    color: var(--text-muted);
     cursor: pointer;
+    transition: background 0.1s;
 }
 
 .context-menu-item:hover {
     background: rgba(255, 255, 255, 0.05);
-}
-
-.context-menu-item.danger {
-    color: var(--error);
+    color: white;
 }
 
 .context-menu-item.danger:hover {
-    background: rgba(255, 92, 92, 0.1);
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--error);
 }
 
-/* User Profile Area */
-.nav-links a {
-    display: block;
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    color: var(--text-dim);
-    text-decoration: none;
+/* User Profile Area (Sidebar Bottom) */
+.user-profile-area {
+    margin-top: auto;
+    padding: 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-out);
+    position: relative;
+    /* For dropdown positioning */
+}
+
+.user-profile-area:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--glass-highlight);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-status {
+    font-size: 0.75rem;
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.user-status::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: currentColor;
+    border-radius: 50%;
+    box-shadow: 0 0 5px var(--success);
+}
+
+/* User Dropdown */
+.user-dropdown {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 0;
+    width: 100%;
+    background: #111116;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+    display: none;
+    /* Toggled via JS/CSS hover */
+    flex-direction: column;
+    gap: 2px;
+    z-index: 200;
+    animation: slideUp 0.2s var(--ease-out);
+}
+
+.user-profile-area:hover .user-dropdown,
+.user-dropdown:hover {
+    display: flex;
+}
+
+.user-dropdown::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 20px;
+}
+
+/* Bridge */
+
+.dropdown-item {
+    padding: 10px 12px;
     border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-decoration: none;
     transition: all 0.2s;
 }
 
-.nav-links a:hover {
+.dropdown-item:hover {
     background: rgba(255, 255, 255, 0.05);
-    color: var(--text-main);
+    color: white;
 }
 
-.nav-links a.active {
-    background: rgba(124, 92, 255, 0.15);
-    color: var(--primary-color);
+.dropdown-item.danger {
+    color: var(--error);
+    opacity: 0.8;
 }
 
-/* Chat Area */
-/* Chat Area / 聊天主区域 */
+.dropdown-item.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    opacity: 1;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--glass-border);
+    margin: 4px 6px;
+}
+
+
+/* 
+   CHAT AREA 
+*/
 .chat-area {
     flex: 1;
-    /* Take up all REMAINING space / 占据剩下所有的空间 */
     display: flex;
     flex-direction: column;
     position: relative;
-    /* Radial Gradient Background / 径向渐变背景 */
-    background: radial-gradient(circle at 50% 10%, #1f1f2e 0%, var(--bg-color) 40%);
+    background: transparent;
+    overflow-y: auto;
+    /* Enable scrolling for content that exceeds height */
 }
 
 .chat-header {
-    padding: 20px 40px;
-    border-bottom: 1px solid var(--glass-border);
+    padding: 24px 40px;
     display: flex;
     justify-content: space-between;
-    /* Space out items: Title <---space---> Status / 两端对齐：标题 <---空格---> 状态 */
     align-items: center;
-    background: rgba(13, 13, 18, 0.8);
-    /* [CSS CLASS 4] Glassmorphism / 毛玻璃效果 */
-    /* This blurs whatever is BEHIND this element / 模糊这层元素背后的东西 */
-    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--backdrop-blur));
+    background: rgba(5, 5, 7, 0.7);
+    z-index: 5;
 }
 
 .chat-header h1 {
-    font-size: 1.1rem;
-    font-weight: 500;
-}
-
-.status-indicator {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--text-dim);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
 .status-indicator.online {
-    background-color: var(--success);
-    box-shadow: 0 0 8px rgba(61, 214, 140, 0.4);
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--success);
 }
 
 /* Messages */
 .messages {
     flex: 1;
-    padding: 40px;
     overflow-y: auto;
+    padding: 40px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 32px;
     max-width: 900px;
-    margin: 0 auto;
     width: 100%;
+    margin: 0 auto;
 }
 
-/* Message Bubbles / 消息气泡 */
 .message {
     display: flex;
     gap: 16px;
-    animation: fadeIn 0.3s ease;
-    /* Use the animation defined below / 使用下面定义的动画 */
+    animation: fadeIn 0.4s var(--ease-out);
+    opacity: 0;
+    animation-fill-mode: forwards;
 }
 
 .message.user {
@@ -275,529 +433,549 @@ body {
 .avatar {
     width: 36px;
     height: 36px;
-    border-radius: 50%;
-    background: var(--glass-border);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
     flex-shrink: 0;
-    border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .message.assistant .avatar {
-    background: linear-gradient(135deg, #2c2c3a, #1a1a24);
-    color: var(--primary-color);
-    border: 1px solid rgba(124, 92, 255, 0.3);
+    background: linear-gradient(135deg, #1f1f2e, #14141a);
+    color: var(--primary);
+    border: 1px solid var(--glass-border);
 }
 
 .message.user .avatar {
-    background: #333;
-    color: #fff;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
 }
 
 .message .content,
 .message-body {
-    background: var(--glass-bg);
-    padding: 16px 20px;
-    border-radius: 12px;
+    padding: 18px 24px;
+    border-radius: 16px;
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 85%;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.message.assistant .message-body {
+    background: rgba(20, 20, 25, 0.6);
     border: 1px solid var(--glass-border);
-    line-height: 1.6;
-    max-width: 80%;
-    font-size: 0.95rem;
+    color: var(--text-main);
+    border-top-left-radius: 2px;
 }
 
 .message.user .content {
-    background: rgba(124, 92, 255, 0.15);
-    border-color: rgba(124, 92, 255, 0.3);
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(6, 182, 212, 0.1));
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    color: var(--text-main);
+    border-top-right-radius: 2px;
 }
 
-.message-body {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.message.system {
+    justify-content: center;
+    opacity: 0.8;
+    margin: 20px 0;
+}
+
+.message.system .content {
     background: transparent;
-    border: none;
-    padding: 0;
-    width: 100%;
-    max-width: 100%;
+    box-shadow: none;
+    color: var(--text-muted);
+    font-size: 0.9em;
+    text-align: center;
+    border: 1px dashed var(--glass-border);
+    padding: 10px 20px;
 }
 
-/* Thinking Block */
-.thinking-block {
-    background: rgba(255, 184, 108, 0.05);
-    border: 1px solid rgba(255, 184, 108, 0.2);
-    border-radius: 8px;
-    overflow: hidden;
-    font-size: 0.9rem;
-}
-
-.thinking-header {
-    background: rgba(255, 184, 108, 0.1);
-    padding: 8px 12px;
-    color: #ffb86c;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    user-select: none;
-}
-
-.thinking-header .toggle-icon {
-    margin-left: auto;
-    font-size: 0.8rem;
-    transition: transform 0.2s;
-}
-
-.thinking-block.collapsed .thinking-header .toggle-icon {
-    transform: rotate(-90deg);
-}
-
-.thinking-content {
-    padding: 12px;
-    color: #dcdccc;
-    font-family: var(--font-mono);
-    white-space: pre-wrap;
-    border-top: 1px solid rgba(255, 184, 108, 0.1);
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.thinking-block.collapsed .thinking-content {
+.message.system .avatar {
     display: none;
 }
 
-/* Tool Block */
-.tool-block {
-    background: rgba(61, 214, 140, 0.05);
-    border: 1px solid rgba(61, 214, 140, 0.2);
-    border-radius: 8px;
-    font-size: 0.85rem;
-}
-
-.tool-header {
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--success);
-    background: rgba(61, 214, 140, 0.1);
-    border-radius: 7px 7px 0 0;
-}
-
-.tool-name {
-    font-weight: 600;
-    font-family: var(--font-mono);
-}
-
-.tool-details {
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.2);
-    font-family: var(--font-mono);
-}
-
-.tool-args {
-    color: #a0a0b0;
-    margin-bottom: 8px;
-    word-break: break-all;
-}
-
-.tool-output {
-    color: #fff;
-    border-top: 1px solid var(--glass-border);
-    padding-top: 8px;
-    margin-top: 8px;
-    white-space: pre-wrap;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.text-content {
-    white-space: pre-wrap;
-}
-
-/* Input Area */
+/* INPUT AREA */
 .input-area {
-    padding: 20px 40px;
-    background: transparent;
+    padding: 30px 40px 40px;
     display: flex;
     justify-content: center;
-    padding-bottom: 40px;
+    background: linear-gradient(to top, var(--bg-deep) 20%, transparent);
 }
 
 .input-glass-container {
     width: 100%;
     max-width: 900px;
-    background: rgba(30, 30, 40, 0.8);
-    backdrop-filter: blur(12px);
+    background: rgba(20, 20, 25, 0.8);
+    backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    padding: 10px;
+    border-radius: 20px;
+    padding: 12px;
     display: flex;
-    gap: 10px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    transition: border-color 0.2s;
+    gap: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    transition: border 0.3s;
 }
 
 .input-glass-container:focus-within {
-    border-color: var(--primary-color);
+    border-color: var(--primary);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(124, 58, 237, 0.2);
 }
 
 textarea {
     flex: 1;
     background: transparent;
     border: none;
-    color: var(--text-main);
-    font-family: var(--font-sans);
+    color: white;
     font-size: 1rem;
     resize: none;
-    padding: 12px;
+    padding: 10px;
     outline: none;
-    max-height: 150px;
+    font-family: inherit;
+    max-height: 200px;
 }
 
 textarea::placeholder {
     color: var(--text-dim);
 }
 
-button {
-    background: var(--primary-color);
+button#sendBtn {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    border-radius: 14px;
     color: white;
     border: none;
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-button:hover {
-    background: var(--primary-hover);
+button#sendBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--primary-glow);
 }
 
-button:disabled {
-    background: #444;
-    cursor: not-allowed;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #444;
-}
-
-/* 
-   [CSS CLASS 5] Keyframe Animations / 关键帧动画
-   We can make things verify smooth. "fadeIn" means: start invisible and move up, then become visible and settle.
-   我们可以制作流畅的动效。“fadeIn”的意思是：开始时透明且位置靠下，然后逐渐显现并向上浮动到位。
-*/
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-        /* Start 10px lower / 从下方 10px 处开始 */
-    }
-
-    to {
-        opacity: 1;
-        /* Fully visible / 完全不透明 */
-        transform: translateY(0);
-        /* Final position / 最终位置 */
-    }
-}
-
-/* Timeline / Execution Steps */
-.execution-step {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 24px;
-    animation: fadeIn 0.3s ease;
-}
-
-.step-indicator {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 24px;
-}
-
-.step-number {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(124, 92, 255, 0.2);
-    border: 1px solid rgba(124, 92, 255, 0.4);
-    color: var(--primary-color);
-    font-size: 11px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.step-line {
-    flex: 1;
-    width: 2px;
-    background: rgba(255, 255, 255, 0.05);
-    min-height: 20px;
-    border-radius: 1px;
-}
-
-.step-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding-bottom: 20px;
-    min-width: 0;
-    /* Prevent overflow */
-}
-
-/* Update Thinking and Tool blocks to fit in timeline */
+/* Thinking & Tools */
 .thinking-block,
-.tool-block,
-.text-content {
-    margin-left: 0;
-    width: 100%;
+.tool-block {
+    margin: 16px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
 }
 
-/* Modal Styles */
+.thinking-header,
+.tool-header {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+    font-weight: 500;
+}
+
+.thinking-header {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.tool-header {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.thinking-content,
+.tool-details {
+    padding: 16px;
+    border-top: 1px solid var(--glass-border);
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+/* Modals & Forms */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    animation: fadeIn 0.3s;
 }
 
-.modal-content {
-    background: var(--sidebar-bg);
+.modal-content,
+.settings-section,
+.settings-container {
+    background: #111116;
     border: 1px solid var(--glass-border);
-    padding: 30px;
-    border-radius: 16px;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    max-width: 500px;
     width: 100%;
-    max-width: 400px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-    animation: fadeIn 0.3s ease;
+    animation: slideUp 0.3s var(--ease-out);
 }
 
-.modal-content h2 {
-    margin-bottom: 20px;
-    color: var(--text-main);
-    text-align: center;
+.settings-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding-bottom: 40px;
+    /* Ensure space at bottom */
+}
+
+.settings-section h2 {
+    margin-bottom: 24px;
+    font-size: 1.5rem;
+    color: white;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .form-group label {
     display: block;
     margin-bottom: 8px;
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 0.9rem;
+    margin-left: 4px;
 }
 
 .form-group input {
     width: 100%;
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.2);
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--glass-border);
-    border-radius: 8px;
-    color: var(--text-main);
+    border-radius: 12px;
+    color: white;
     font-size: 1rem;
+    transition: all 0.2s;
     outline: none;
 }
 
 .form-group input:focus {
-    border-color: var(--primary-color);
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
 }
 
 .primary-btn {
     width: 100%;
-    background: var(--primary-color);
+    padding: 14px;
+    background: linear-gradient(135deg, var(--primary), #a855f7);
     color: white;
-    padding: 12px;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .primary-btn:hover {
-    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(124, 58, 237, 0.4);
 }
 
-/* 1. 确保交互块能够撑满可用宽度，不被 Flex 压缩 */
-.interaction-block {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-content: stretch;
+.primary-btn.warning {
+    background: linear-gradient(135deg, var(--warning), #f97316);
 }
 
-/* 2. 核心修复：确保按钮在垂直布局中不收缩 */
-.interaction-block button {
-    background: rgba(255, 255, 255, 0.1);
-    width: 100% !important;
-    /* 强制按钮占满一行 */
-    height: auto !important;
-    /* 撤销可能的固定高度 */
-    min-height: 44px;
-    padding: 12px 16px !important;
-    display: block;
-    /* 确保是块级显示 */
-    text-align: left;
-    white-space: normal;
-    /* 允许长文本换行 */
-    word-wrap: break-word;
-    flex-shrink: 0;
-    /* 防止在 Flex 容器中被压缩 */
+.primary-btn.danger {
+    background: linear-gradient(135deg, var(--error), #dc2626);
 }
 
-/* 3. 修复 markdown-body 在按钮内的干扰 */
-.interaction-block .markdown-body p {
-    margin: 0;
-    width: 100%;
-}
-
-/* User Profile Area */
-.user-profile-area {
-    margin-top: auto;
-    /* Push to bottom */
-    padding-top: 20px;
-    border-top: 1px solid var(--glass-border);
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* Switch Toggle */
+.switch {
     position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
     cursor: pointer;
-    padding: 12px;
-    border-radius: 12px;
-    transition: background 0.2s;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #333;
+    transition: .4s;
+    border-radius: 34px;
 }
 
-.user-profile-area:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
     border-radius: 50%;
-    background: linear-gradient(135deg, #7c5cff, #a28aff);
-    color: white;
+}
+
+input:checked+.slider {
+    background-color: var(--primary);
+}
+
+input:focus+.slider {
+    box-shadow: 0 0 1px var(--primary);
+}
+
+input:checked+.slider:before {
+    transform: translateX(24px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Utilities */
+.hidden {
+    display: none !important;
+}
+
+/* Markdown Content adjustments */
+.markdown-body {
+    color: var(--text-main);
+}
+
+.markdown-body pre {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+}
+
+/* 
+   RESPONSIVE ADJUSTMENTS 
+   Make it look good on mobile!
+*/
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--glass-border);
+        padding: 12px;
+    }
+
+    .nav-links {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .nav-links a {
+        white-space: nowrap;
+    }
+
+    .chat-area {
+        height: calc(100vh - 80px);
+    }
+
+    /* Adjust based on sidebar height */
+    .session-list,
+    .user-profile-area {
+        display: none;
+    }
+
+    /* Simplify sidebar on mobile for now or move to menu */
+
+    .settings-container {
+        margin: 20px 10px;
+        padding: 0;
+    }
+
+    .modal-content,
+    .settings-section {
+        padding: 20px;
+    }
+
+    .chat-header {
+        padding: 16px 20px;
+    }
+
+    .messages {
+        padding: 20px;
+    }
+
+    .input-area {
+        padding: 20px;
+    }
+}
+
+/* Avatar Upload Container */
+.avatar-upload-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.avatar-upload {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.avatar-upload:hover {
+    transform: scale(1.05);
+}
+
+.avatar-preview {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary);
+    background: var(--bg-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    font-size: 1.2rem;
-    box-shadow: 0 4px 12px rgba(124, 92, 255, 0.3);
+    font-size: 2.5rem;
+    color: var(--text-muted);
+    overflow: hidden;
+    box-shadow: 0 0 20px var(--primary-glow);
 }
 
-.user-info {
-    flex: 1;
-}
-
-.user-name {
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: var(--text-main);
-}
-
-.user-status {
-    font-size: 0.75rem;
-    color: var(--success);
-}
-
-/* User Dropdown */
-.user-dropdown {
+.avatar-overlay {
     position: absolute;
-    bottom: 100%;
-    /* Show above profile area */
+    top: 0;
     left: 0;
     width: 100%;
-    background: var(--sidebar-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    padding: 8px;
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
-    display: none;
-    /* Hidden by default */
-    flex-direction: column;
-    margin-bottom: 10px;
-    animation: fadeIn 0.2s ease;
-    z-index: 100;
-}
-
-/* Invisible bridge to prevent menu from closing when moving mouse across the gap */
-.user-dropdown::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    height: 20px;
-    /* Covers the 10px margin + buffer */
-    background: transparent;
-}
-
-.user-profile-area:hover .user-dropdown,
-.user-dropdown:hover {
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
     display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+    backdrop-filter: blur(2px);
 }
 
-.dropdown-item {
-    padding: 10px 12px;
-    color: var(--text-dim);
-    text-decoration: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    transition: all 0.2s;
+.avatar-upload:hover .avatar-overlay {
+    opacity: 1;
 }
 
-.dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-main);
-}
-
-.dropdown-divider {
+.section-divider {
     height: 1px;
     background: var(--glass-border);
-    margin: 4px 0;
+    margin: 30px 0;
 }
 
-.dropdown-item.danger {
-    color: var(--error);
+/* 
+   MISSING STYLES RESTORATION
+   - New Chat Button
+   - Session Header
+   - Thinking Block Collapse
+*/
+
+.session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px 10px 16px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--glass-border);
 }
 
-.dropdown-item.danger:hover {
-    background: rgba(255, 92, 92, 0.1);
+.session-header span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.new-chat-btn {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border: none;
+    border-radius: 6px;
+    color: white;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.new-chat-btn:hover {
+    opacity: 0.9;
+}
+
+/* Thinking Block Collapse Logic */
+.thinking-block.collapsed .thinking-content {
+    display: none;
+}
+
+.thinking-block.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.toggle-icon {
+    margin-left: auto;
+    font-size: 0.8em;
+    transition: transform 0.3s;
+}
+
+.session-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 10px;
+    padding-right: 4px;
+    display: flex;
+    flex-direction: column;
 }

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management - Agentic AI</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/i18n.js"></script>
     <style>
         /* Custom styles for Admin Page */
         .admin-container {
@@ -108,7 +109,7 @@
         <aside class="sidebar">
             <div class="logo">
                 <div class="logo-icon">AG</div>
-                <span>Admin Panel</span>
+                <span data-i18n="platform_settings_header">Admin Panel</span>
             </div>
             <nav class="nav-links">
                 <a href="/" style="display: flex; align-items: center; gap: 10px;">
@@ -122,8 +123,9 @@
 
         <main class="main-content">
             <div class="header-actions">
-                <h1>User Management</h1>
-                <button id="btnAddNew" class="primary-btn" style="width: auto; padding: 10px 20px;">+ Add New
+                <h1 data-i18n="user_management_header">User Management</h1>
+                <button id="btnAddNew" class="primary-btn" style="width: auto; padding: 10px 20px;"
+                    data-i18n="create_user">+ Add New
                     User</button>
             </div>
 
@@ -131,11 +133,11 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>User</th>
-                        <th>Role</th>
-                        <th>Email</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th data-i18n="username">User</th>
+                        <th data-i18n="role">Role</th>
+                        <th data-i18n="email">Email</th>
+                        <th data-i18n="is_active">Status</th>
+                        <th data-i18n="actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="userTableBody">
