@@ -85,7 +85,6 @@ from agent_tools.interaction import (
     attempt_completion, AttemptCompletionArgs,        # 完成任务
     new_task, NewTaskArgs,                            # 创建新任务
     switch_mode, SwitchModeArgs,                      # 切换模式
-    update_todo_list, UpdateTodoListArgs,             # 更新待办事项
     fetch_instructions, FetchInstructionsArgs         # 获取指令
 )
 
@@ -100,8 +99,10 @@ from agent_tools.skills import (
 from agent_tools.skills_loader import SkillsLoader
 from agent_tools.skills_manager import SkillsManager
 
-# 对话日志记录器
-from log.logger import ConversationLogger
+# 导入 MCP 模块
+from agent_tools.mcp.client import McpClient
+from agent_tools.mcp.transport import StdioTransport, SseTransport
+
 
 
 # =============================================================================
@@ -501,7 +502,7 @@ ALL responses MUST show ANY `language construct` OR filename reference as clicka
 TOOL USE
 
 You have access to a set of tools that are executed upon the user's approval. Use the provider-native tool-calling mechanism. Do not include XML markup or examples. **CRITICAL RULES:**
-1. **You must use EXACTLY ONE tool call per assistant response.** 
+1. **You must use at least one tool call per assistant response.** You may attempt multiple calls if they are safe to execute in sequence.
 2. **Do NOT call zero tools.** If you think the task is done, you MUST use the `attempt_completion` tool.
 3. **Do NOT return a final answer as plain text.** You must encapsulate your final response in the `attempt_completion` tool arguments.
 4. **Do NOT output conversational text without a tool call.**
@@ -691,6 +692,54 @@ class ToolExecutor:
         # 打印注册成功信息
         print(f"[INFO] 工具 [{name}] 已注册 (Schema 已自动生成)")
 
+    def register_mcp_tool(self, tool: Any, client: Any):
+        """
+        注册 MCP 工具。
+        
+        参数:
+            tool: MCP Tool 对象 (from agent_tools.mcp.models)
+            client: MCP Client 对象 (from agent_tools.mcp.client)
+        """
+        # 1. 构造 OpenAI Function Schema
+        # MCP 的 inputSchema 就是 JSON Schema，可以直接使用
+        schema = {
+            "type": "function",
+            "function": {
+                "name": tool.name,
+                "description": tool.description or "",
+                "parameters": tool.inputSchema
+            }
+        }
+        self._schemas.append(schema)
+        
+        # 2. 构造执行函数
+        async def execute_mcp_tool(ctx, args: dict):
+            """MCP 工具的包装执行函数"""
+            # 调用 MCP 客户端
+            result = await client.call_tool(tool.name, args)
+            
+            # 处理结果
+            if result.isError:
+                 return f"MCP Error: {result.content}"
+            
+            # 拼接所有文本内容
+            text_content = []
+            for item in result.content:
+                if item.get("type") == "text":
+                    text_content.append(item.get("text", ""))
+                elif item.get("type") == "image":
+                    text_content.append("[Image Content]")
+                elif item.get("type") == "resource":
+                    text_content.append(f"[Resource: {item.get('resource', {}).get('uri')}]")
+            
+            return "\n".join(text_content)
+
+        # 3. 注册到执行表
+        # 注意：这里我们存的是 (func, None)，因为没有 Pydantic 模型
+        # execute 方法需要适配这种情况
+        self._execution_map[tool.name] = (execute_mcp_tool, None)
+        print(f"[INFO] MCP 工具 [{tool.name}] 已注册")
+
     def get_definitions(self) -> List[dict]:
         """
         获取所有工具的 Schema 定义。
@@ -734,9 +783,13 @@ class ToolExecutor:
         func, args_model = self._execution_map[name]
         
         try:
-            # 使用 Pydantic 模型验证和转换参数
-            # 这会自动进行类型转换和验证
-            args_instance = args_model(**raw_args)
+            # 准备参数
+            if args_model:
+                # 使用 Pydantic 模型验证和转换参数
+                args_instance = args_model(**raw_args)
+            else:
+                # 如果没有模型（如 MCP 工具），直接使用字典
+                args_instance = raw_args
             
             # 判断函数是同步还是异步
             if inspect.iscoroutinefunction(func):
@@ -1045,21 +1098,33 @@ class AgentRuntime:
             
             # 如果有 TODO 列表，注入到上下文中
             # 这让 AI 知道当前的任务进度
-            if self.tool_context.todos:
-                print(f"\n[DEBUG] Current Context Todos: {self.tool_context.todos}")
-                todo_str = "\n".join(self.tool_context.todos)
+            # 如果有 TODO 列表，注入到上下文中
+            # 这让 AI 知道当前的任务进度
+            if self.tool_context.todo_state:
+                # 将结构化的 todo 状态转换为 JSON 字符串
+                todo_json = json.dumps(self.tool_context.todo_state, ensure_ascii=False, indent=2)
+                # print(f"\n[DEBUG] Current Context Todos: {todo_json}")
+                
                 system_injection = {
                     "role": "system", 
-                    "content": f"""## Current Todo List Status
+                    "content": f"""## Current Todo List Status (JSON)
 
-{todo_str}
+{todo_json}
 
 CRITICAL INSTRUCTION: 
-1. Identify the *FIRST* unchecked task (marked `[ ]`). 
-2. **CHECK HISTORY**: Did you just finish this task's work (e.g., ran the command) in the last turn? 
-   - **YES**: Do NOT do it again. Call `update_todo_list` IMMEDIATELY to mark it `[x]`. 
-   - **NO**: Execute the task's work. Then, in the **SAME TURN**, call `update_todo_list` to mark it `[x]`.
-3. Do NOT use `[-]`. Only `[ ]` and `[x]`."""
+1. **PRIORITY 1**: Check for any task with status **"in_progress"**.
+   - **IF FOUND**: This is your current focus.
+     - **CHECK LAST OUTPUT**: Did the previous command succeed?
+       - **YES**: Call `update_todo(id=..., status="completed")`.
+       - **NO/FAILED**: Retry execution OR call `update_todo(id=..., status="failed")`.
+   - **Do NOT** start a new task while one is "in_progress".
+
+2. **PRIORITY 2**: If no "in_progress" tasks, find the *FIRST* task with status **"pending"**.
+   - **ACTION**: 
+     - 1. Call `update_todo(id=..., status="in_progress")`.
+     - 2. **IN THE SAME TURN**: Execute the task's command/action.
+
+3. Use `write_todo` ONLY for refactoring the full list. Use `update_todo` for status updates."""
                 }
                 messages_to_send.append(system_injection)
 
@@ -1301,9 +1366,60 @@ class CLI:
             print(f"\n\033[91m[Error]: {content}\033[0m")
 
 
+async def init_mcp_servers(runtime: AgentRuntime):
+    """
+    初始化 MCP 服务器并注册工具。
+    """
+    config_path = Path("mcp_config.json")
+    if not config_path.exists():
+        return
+
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+            
+        servers = config.get("mcpServers", {})
+        for name, server_config in servers.items():
+            try:
+                print(f"[Info] Initializing MCP server: {name}")
+                transport = None
+                
+                # Command-based (Stdio)
+                if "command" in server_config:
+                    cmd = server_config["command"]
+                    args = server_config.get("args", [])
+                    env = server_config.get("env")
+                    transport = StdioTransport(cmd, args, env)
+                
+                # URL-based (SSE)
+                elif "url" in server_config:
+                    url = server_config["url"]
+                    transport = SseTransport(url)
+                
+                if transport:
+                    client = McpClient(transport)
+                    await client.connect()
+                    
+                    # Store client in runtime to keep it alive
+                    if not hasattr(runtime, "mcp_clients"):
+                        runtime.mcp_clients = []
+                    runtime.mcp_clients.append(client)
+                    
+                    tools = await client.list_tools()
+                    for tool in tools:
+                        runtime.executor.register_mcp_tool(tool, client)
+                        
+            except Exception as e:
+                print(f"[Error] Failed to initialize MCP server {name}: {e}")
+                
+    except Exception as e:
+        print(f"[Error] Failed to load MCP config: {e}")
+
+
 # =============================================================================
 # 主程序入口
 # =============================================================================
+
 
 if __name__ == "__main__":
     # 从 .env 文件加载环境变量
@@ -1352,13 +1468,17 @@ if __name__ == "__main__":
     executor.register(attempt_completion, AttemptCompletionArgs)
     executor.register(new_task, NewTaskArgs)
     executor.register(switch_mode, SwitchModeArgs)
-    executor.register(update_todo_list, UpdateTodoListArgs)
     executor.register(fetch_instructions, FetchInstructionsArgs)
+
     
     # --- 技能工具 ---
     executor.register(list_skills, ListSkillsArgs)
     executor.register(search_skills, SearchSkillsArgs)
-    executor.register(get_skill, GetSkillArgs)
+    # --- Todo 工具 ---
+    from agent_tools.todo import read_todo, ReadTodoArgs, write_todo, WriteTodoArgs, update_todo, UpdateTodoArgs
+    executor.register(read_todo, ReadTodoArgs)
+    executor.register(write_todo, WriteTodoArgs)
+    executor.register(update_todo, UpdateTodoArgs)
     
     
     # 步骤 4: 初始化核心运行时
@@ -1369,7 +1489,20 @@ if __name__ == "__main__":
         skills_manager=skills_manager, 
         logger=logger
     )
+
+    # 步骤 5: 初始化 MCP 服务器
+    # 注意：这里需要运行异步函数，但 asyncio.run 只能运行一个顶层入口
+    # 所以我们在 app.run() 中处理，或者在这里使用 loop.run_until_complete
+    # 但由于 app.run() 也是异步的，我们可以把 init 放在 app.run() 之前
+    # 或者修改 CLI.run 为接受一个初始化回调
     
-    # 步骤 5: 启动 CLI 界面
-    app = CLI(runtime)
-    asyncio.run(app.run())  # 运行异步主循环
+    # 简单方案：在这里运行初始化
+    # 注意：mcp client 需要保持运行，init_mcp_servers 会启动连接
+    # 我们需要确保 runtime 保持对 client 的引用
+    async def bootstrap():
+        await init_mcp_servers(runtime)
+        app = CLI(runtime)
+        await app.run()
+
+    asyncio.run(bootstrap())
+

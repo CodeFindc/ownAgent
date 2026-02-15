@@ -67,11 +67,13 @@ from pydantic import BaseModel  # 数据验证
 from ag import (
     LLMTransport,      # LLM 传输层
     ToolExecutor,      # 工具执行器
-    SkillsLoader,      # 技能加载器
-    SkillsManager,     # 技能管理器
-    ConversationLogger,  # 对话日志记录器
     AgentRuntime,      # Agent 运行时
 )
+
+from log.logger import ConversationLogger
+from agent_tools.skills_loader import SkillsLoader
+from agent_tools.skills_manager import SkillsManager
+
 
 # 导入所有工具函数和参数模型
 # 这些工具会在启动时注册到 ToolExecutor
@@ -94,16 +96,28 @@ from ag import (
     attempt_completion, AttemptCompletionArgs,
     new_task, NewTaskArgs,
     switch_mode, SwitchModeArgs,
-    update_todo_list, UpdateTodoListArgs,
     fetch_instructions, FetchInstructionsArgs,
     # 技能工具
+    list_skills, ListSkillsArgs,
+    search_skills, SearchSkillsArgs,
     list_skills, ListSkillsArgs,
     search_skills, SearchSkillsArgs,
     get_skill, GetSkillArgs
 )
 
+from agent_tools.todo import (
+    read_todo, ReadTodoArgs,
+    write_todo, WriteTodoArgs,
+    update_todo, UpdateTodoArgs
+)
+
+# 导入认证模块
 # 导入认证模块
 from auth import router as auth_router, dependencies as auth_deps, models as auth_models
+
+# 导入 MCP 模块
+from agent_tools.mcp.client import McpClient
+from agent_tools.mcp.transport import StdioTransport, SseTransport
 
 
 # =============================================================================
@@ -236,7 +250,57 @@ def get_session_path(user_id: int, session_id: str) -> Path:
     return SESSIONS_DIR / f"{user_id}_session_{session_id}.json"
 
 
-def get_or_create_runtime(user_id: int, session_id: str) -> AgentRuntime:
+async def init_mcp_servers(runtime: AgentRuntime):
+    """
+    初始化 MCP 服务器并注册工具。
+    """
+    config_path = Path("mcp_config.json")
+    if not config_path.exists():
+        return
+
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+            
+        servers = config.get("mcpServers", {})
+        for name, server_config in servers.items():
+            try:
+                print(f"[Info] Initializing MCP server: {name}")
+                transport = None
+                
+                # Command-based (Stdio)
+                if "command" in server_config:
+                    cmd = server_config["command"]
+                    args = server_config.get("args", [])
+                    env = server_config.get("env")
+                    transport = StdioTransport(cmd, args, env)
+                
+                # URL-based (SSE)
+                elif "url" in server_config:
+                    url = server_config["url"]
+                    transport = SseTransport(url)
+                
+                if transport:
+                    client = McpClient(transport)
+                    await client.connect()
+                    
+                    # Store client in runtime to keep it alive
+                    if not hasattr(runtime, "mcp_clients"):
+                        runtime.mcp_clients = []
+                    runtime.mcp_clients.append(client)
+                    
+                    tools = await client.list_tools()
+                    for tool in tools:
+                        runtime.executor.register_mcp_tool(tool, client)
+                        
+            except Exception as e:
+                print(f"[Error] Failed to initialize MCP server {name}: {e}")
+                
+    except Exception as e:
+        print(f"[Error] Failed to load MCP config: {e}")
+
+
+async def get_or_create_runtime(user_id: int, session_id: str) -> AgentRuntime:
     """
     获取或创建用户的会话运行时。
     
@@ -257,6 +321,7 @@ def get_or_create_runtime(user_id: int, session_id: str) -> AgentRuntime:
         3. 创建工具执行器并注册所有工具
         4. 创建 Agent 运行时
         5. 如果存在历史记录，加载历史
+        6. 初始化 MCP 服务器
     """
     # 构建运行时的唯一标识
     runtime_key = f"{user_id}:{session_id}"
@@ -306,13 +371,18 @@ def get_or_create_runtime(user_id: int, session_id: str) -> AgentRuntime:
     executor.register(attempt_completion, AttemptCompletionArgs)
     executor.register(new_task, NewTaskArgs)
     executor.register(switch_mode, SwitchModeArgs)
-    executor.register(update_todo_list, UpdateTodoListArgs)
     executor.register(fetch_instructions, FetchInstructionsArgs)
+    
     
     # --- 技能工具 ---
     executor.register(list_skills, ListSkillsArgs)
     executor.register(search_skills, SearchSkillsArgs)
     executor.register(get_skill, GetSkillArgs)
+
+    # --- Todo 工具 ---
+    executor.register(read_todo, ReadTodoArgs)
+    executor.register(write_todo, WriteTodoArgs)
+    executor.register(update_todo, UpdateTodoArgs)
 
     # 步骤 4: 创建日志记录器
     logger = ConversationLogger()
@@ -337,12 +407,15 @@ def get_or_create_runtime(user_id: int, session_id: str) -> AgentRuntime:
         except Exception:
             pass  # 忽略加载错误
 
+    # 步骤 7: 初始化 MCP 服务器
+    await init_mcp_servers(runtime)
+
     # 缓存运行时
     session_runtimes[runtime_key] = runtime
     return runtime
 
 
-def save_user_session(user_id: int):
+async def save_user_session(user_id: int):
     """
     手动保存用户会话（已弃用）。
     
@@ -355,7 +428,7 @@ def save_user_session(user_id: int):
         return
     sid = active_sessions[user_id]
     path = get_session_path(user_id, sid)
-    runtime = get_or_create_runtime(user_id, sid)
+    runtime = await get_or_create_runtime(user_id, sid)
     runtime.context.save_history(str(path))
 
 
@@ -468,7 +541,7 @@ async def new_session(current_user: auth_models.User = Depends(auth_deps.get_cur
     new_sid = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # 初始化运行时
-    runtime = get_or_create_runtime(current_user.id, new_sid)
+    runtime = await get_or_create_runtime(current_user.id, new_sid)
     runtime.context.reset()  # 重置为初始状态
     
     # 保存初始会话文件
@@ -508,7 +581,7 @@ async def load_session(session_id: str, current_user: auth_models.User = Depends
         return {"error": "Session not found or permission denied"}
     
     # 获取或创建运行时（会自动加载历史）
-    runtime = get_or_create_runtime(current_user.id, session_id)
+    runtime = await get_or_create_runtime(current_user.id, session_id)
     
     # 设为活跃会话
     active_sessions[current_user.id] = session_id
@@ -563,7 +636,7 @@ async def chat_endpoint(request: ChatRequest, current_user: auth_models.User = D
         active_sessions[current_user.id] = session_id
     
     # 获取运行时
-    runtime = get_or_create_runtime(current_user.id, session_id)
+    runtime = await get_or_create_runtime(current_user.id, session_id)
 
     # 定义 SSE 事件生成器
     async def event_generator():
@@ -583,7 +656,7 @@ async def chat_endpoint(request: ChatRequest, current_user: auth_models.User = D
                 await asyncio.sleep(0.01)
             
             # 对话完成后自动保存
-            save_user_session(current_user.id)
+            await save_user_session(current_user.id)
             
         except Exception as e:
             # 发生错误时返回错误事件

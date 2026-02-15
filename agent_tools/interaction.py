@@ -9,8 +9,7 @@ ownAgent - 用户交互工具模块
 2. attempt_completion - 完成任务并返回结果
 3. new_task - 创建新任务
 4. switch_mode - 切换工作模式
-5. update_todo_list - 更新待办事项列表
-6. fetch_instructions - 获取预定义任务的指令
+5. fetch_instructions - 获取预定义任务的指令
 
 这些工具让 AI 能够：
 - 在需要时向用户请求更多信息
@@ -173,10 +172,6 @@ class NewTaskArgs(BaseModel):
         ...,
         description="Initial user instructions or context for the new task"
     )
-    todos: Optional[str] = Field(
-        None,
-        description="Optional initial todo list written as a markdown checklist; required when the workspace mandates todos"
-    )
 
 
 class SwitchModeArgs(BaseModel):
@@ -213,32 +208,7 @@ class SwitchModeArgs(BaseModel):
     )
 
 
-class UpdateTodoListArgs(BaseModel):
-    """
-    update_todo_list 工具的参数模型。
-    
-    这个工具用于更新待办事项列表，跟踪任务进度。
-    
-    属性:
-        todos (str): 完整的 Markdown 检查列表
-            - 使用 [ ] 表示待办
-            - 使用 [x] 表示已完成
-            - 使用 [-] 表示进行中（可选）
-    
-    格式说明:
-        - 单层列表，不支持嵌套
-        - 按执行顺序排列
-        - 每次更新提供完整列表（会覆盖之前的）
-    
-    示例:
-        >>> args = UpdateTodoListArgs(
-        ...     todos="[x] 分析需求\\n[x] 设计架构\\n[-] 实现核心逻辑\\n[ ] 编写测试"
-        ... )
-    """
-    todos: str = Field(
-        ...,
-        description="Full markdown checklist in execution order, using [ ] for pending, [x] for completed, and [-] for in progress"
-    )
+
 
 
 class FetchInstructionsArgs(BaseModel):
@@ -426,13 +396,6 @@ def new_task(ctx: ToolContext, args: NewTaskArgs) -> ToolResult:
     """
     # 切换模式
     ctx.mode = args.mode
-    
-    # 设置待办事项列表
-    if args.todos:
-        # 将 Markdown 格式的 TODO 转换为列表
-        ctx.todos = [line.strip() for line in args.todos.splitlines() if line.strip()]
-    else:
-        ctx.todos = []
         
     return ToolResult(
         success=True, 
@@ -472,53 +435,7 @@ def switch_mode(ctx: ToolContext, args: SwitchModeArgs) -> ToolResult:
     )
 
 
-def update_todo_list(ctx: ToolContext, args: UpdateTodoListArgs) -> ToolResult:
-    """
-    更新待办事项列表。
-    
-    这个工具用于跟踪多步骤任务的进度。
-    每次更新都会完全替换之前的列表。
-    
-    参数:
-        ctx (ToolContext): 工具执行上下文
-        args (UpdateTodoListArgs): 工具参数
-    
-    返回:
-        ToolResult: 确认更新的结果
-    
-    使用原则:
-        1. 更新前确认哪些任务已完成
-        2. 可以一次更新多个状态
-        3. 发现新任务时动态添加
-        4. 只有完全完成时才标记 [x]
-        5. 保留未完成的任务
-    
-    TODO 格式:
-        [ ] 待办任务
-        [x] 已完成任务
-        [-] 进行中任务（可选）
-    
-    示例:
-        初始状态：
-        [x] 分析需求
-        [x] 设计架构
-        [-] 实现核心逻辑
-        [ ] 编写测试
-        [ ] 更新文档
-        
-        完成实现后：
-        [x] 分析需求
-        [x] 设计架构
-        [x] 实现核心逻辑
-        [-] 编写测试
-        [ ] 更新文档
-        [ ] 添加性能测试
-    """
-    # 将 Markdown 格式转换为列表存储
-    # 过滤掉空行
-    ctx.todos = [line.strip() for line in args.todos.splitlines() if line.strip()]
-    
-    return ToolResult(success=True, output="TODO list updated.")
+
 
 
 def fetch_instructions(ctx: ToolContext, args: FetchInstructionsArgs) -> ToolResult:

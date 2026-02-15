@@ -1,0 +1,10 @@
+{
+    "mcpServers": {
+        "test-echo": {
+            "command": "python",
+            "args": [
+                "e:\\github\\ownAgent\\test_mcp_server.py"
+            ]
+        }
+    }
+}

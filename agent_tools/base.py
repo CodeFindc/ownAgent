@@ -146,9 +146,9 @@ class ToolContext(BaseModel):
         description="工作区根目录，所有文件操作必须在此目录下进行 / Workspace root directory"
     )
     
-    todos: List[str] = Field(
-        default_factory=list,  # 默认为空列表
-        description="当前的待办事项列表 / Current list of TODOs"
+    todo_state: List[Any] = Field(
+        default_factory=list,
+        description="结构化的待办事项状态 (JSON) / Structured Todo state (JSON)"
     )
     
     mode: str = Field(
