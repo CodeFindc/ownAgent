@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Debug: Remove loading overlay
+    const loader = document.getElementById('app-loading');
+    if (loader) loader.style.display = 'none';
+
     // [DOM Element Selection / 获取页面元素]
     // These variables store references to HTML elements so we can manipulate them later.
     // 这些变量存储了对 HTML 元素的引用，以便我们稍后操作它们。
@@ -9,127 +13,122 @@ document.addEventListener('DOMContentLoaded', () => {
     const newChatBtn = document.getElementById('newChatBtn');      // "New Chat" button / "新建聊天"按钮
 
     // Auth UI Elements / 认证相关的界面元素
-    const loginModal = document.getElementById('loginModal');       // The login popup / 登录弹窗
-    const loginForm = document.getElementById('loginForm');         // The login form / 登录表单
-    const loginError = document.getElementById('loginError');       // Where to show login errors / 显示登录错误的地方
-    const userProfileEl = document.getElementById('userProfile');   // User profile section (bottom left) / 用户资料区域（左下角）
-    const userNameDisplay = document.getElementById('userNameDisplay'); // Where to show username / 显示用户名的地方
-    const logoutBtn = document.getElementById('logoutBtn');         // Logout text link / 注销链接
+    // Auth UI Elements
+    const userProfileEl = document.getElementById('userProfile');
+    const userAvatar = document.getElementById('userAvatar'); // Dashboard View
+    const userAvatarSidebar = document.getElementById('userAvatarSidebar'); // Sidebar View (if distinct)
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const userDropdown = document.getElementById('userDropdown');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const navAdminUsers = document.getElementById('navAdminUsers');
+    const navAdminSettings = document.getElementById('navAdminSettings');
 
-    // State / 状态变量
-    // accessToken: The key to prove we are logged in (stored in browser)
-    // accessToken: 证明我们已登录的密钥（存储在浏览器中）
+    // Logo Elements
+    const logoIcon = document.getElementById('logoIcon');
+    const logoText = document.getElementById('logoText');
+
+    // State
     let accessToken = localStorage.getItem('access_token');
-    let currentUser = null;     // Current logged-in user info / 当前登录的用户信息
-    let activeSessionId = null; // Current chat session ID / 当前聊天会话的 ID
+    let currentUser = null;
+    let activeSessionId = null;
 
-    // --- Authentication Logic / 认证逻辑 ---
+    // --- Initialization ---
+    // 1. Load System Settings (Logo)
+    loadSystemSettings();
 
-    // 1. Check Auth on Startup / 启动时检查认证状态
-    // If we have a token, check if it's still valid. If not, show login.
-    // 如果我们有 token，检查它是否有效。如果无效，显示登录框。
+    // 2. Check Auth
     if (accessToken) {
         checkAuthStatus();
     } else {
-        showLogin();
+        window.location.href = '/static/login.html';
     }
 
-    // Function: checkAuthStatus / 检查认证状态函数
-    // Async function to fetch user details from server.
-    // 异步函数：从服务器获取用户详情
+    async function loadSystemSettings() {
+        try {
+            // Public endpoint to get settings
+            const res = await fetch('/auth/settings');
+            if (res.ok) {
+                const settings = await res.json();
+                const siteName = settings.find(s => s.key === 'site_name');
+                const siteLogoText = settings.find(s => s.key === 'site_logo_text');
+
+                if (siteName && logoText) logoText.textContent = siteName.value;
+                if (siteLogoText && logoIcon) logoIcon.textContent = siteLogoText.value;
+            }
+        } catch (e) {
+            console.error("Failed to load settings:", e);
+        }
+    }
+
     async function checkAuthStatus() {
         try {
-            // Send a request to '/auth/users/me' using our helper function
-            // 使用我们的辅助函数向 '/auth/users/me' 发送请求
             const user = await authFetch('/auth/users/me');
             currentUser = user;
-            updateUIForLoggedIn(user); // Update screen to show user is logged in / 更新屏幕显示已登录状态
-            await loadSessions();      // Load chat history list / 加载聊天历史列表
+            updateUIForLoggedIn(user);
+            await loadSessions();
         } catch (e) {
             console.error("Auth check failed:", e);
-            logout(); // If check fails, force logout / 如果检查失败，强制注销
+            logout();
         }
     }
 
-    // 2. Login Event Listener / 登录事件监听器
-    // When user submits the login form...
-    // 当用户提交登录表单时...
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Stop page from refreshing / 阻止页面刷新
-        const formData = new FormData(loginForm); // Collect input data / 收集输入数据
+    // User Profile Interaction
+    if (userProfileEl) {
+        // Toggle dropdown on click (or could be hover via CSS, but JS toggle is safer for touch)
+        // CSS handles hover, but let's ensure clicking doesn't break it or does something useful
+        // actually, CSS :hover handling is sufficient for desktop.
+    }
 
-        try {
-            // Send username/password to server to get a token
-            // 发送用户名/密码给服务器以获取 token
-            const res = await fetch('/auth/token', {
-                method: 'POST',
-                body: formData
-            });
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            logout();
+        });
+    }
 
-            if (!res.ok) {
-                // If login fails (e.g. wrong password), show error
-                // 如果登录失败（如密码错误），显示错误信息
-                const err = await res.json();
-                throw new Error(err.detail || 'Login failed');
-            }
-
-            // Success! We got the token.
-            // 成功！我们拿到了 token。
-            const data = await res.json();
-            accessToken = data.access_token;
-            localStorage.setItem('access_token', accessToken); // Save it / 保存它
-
-            // Fetch User Details to confirm everything is OK
-            // 获取用户详情以确认一切正常
-            await checkAuthStatus();
-
-            hideLogin(); // Close the modal / 关闭弹窗
-        } catch (e) {
-            loginError.textContent = e.message; // Show error on screen / 在屏幕上显示错误
-        }
-    });
-
-    // 3. Logout / 注销
-    logoutBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        logout(); // Call logout function / 调用注销函数
-    });
-
-    // Function: logout / 注销函数
-    // Clears all user data and resets the state.
-    // 清除所有用户数据并重置状态。
     function logout() {
         accessToken = null;
         currentUser = null;
-        localStorage.removeItem('access_token'); // Delete token from storage / 从存储中删除 token
-        showLogin(); // Show login screen again / 再次显示登录界面
-        userProfileEl.style.display = 'none'; // Hide user profile / 隐藏左下角用户资料
-        messagesContainer.innerHTML = ''; // Clear chat history / 清空聊天记录
-        sessionListEl.innerHTML = '';     // Clear session list / 清空会话列表
-    }
-
-    function showLogin() {
-        loginModal.style.display = 'flex';
-        loginForm.reset();
-        loginError.textContent = '';
-    }
-
-    function hideLogin() {
-        loginModal.style.display = 'none';
+        localStorage.removeItem('access_token'); // Delete token from storage
+        window.location.href = '/static/login.html'; // Redirect to login
     }
 
     function updateUIForLoggedIn(user) {
-        userProfileEl.style.display = 'block';
-        userNameDisplay.textContent = user.username + (user.role === 'admin' ? ' (Admin)' : '');
-        // Restore Welcome
-        if (messagesContainer.children.length <= 1) {
+        if (userProfileEl) userProfileEl.style.display = 'flex';
+        if (userNameDisplay) userNameDisplay.textContent = user.username;
+
+        // Avatar Logic
+        const avatarUrl = user.avatar_url;
+        const els = [userAvatar, userAvatarSidebar, document.getElementById('userAvatar')]; // Handle potential duplicates or missing IDs
+
+        els.forEach(el => {
+            if (!el) return;
+            if (avatarUrl) {
+                el.textContent = '';
+                el.style.backgroundImage = `url('${avatarUrl}')`;
+                el.style.backgroundSize = 'cover';
+                el.style.backgroundPosition = 'center';
+            } else {
+                el.textContent = user.username.charAt(0).toUpperCase();
+                el.style.backgroundImage = 'none';
+            }
+        });
+
+        // Show Admin Links
+        if (user.role === 'admin') {
+            if (navAdminUsers) navAdminUsers.style.display = 'block';
+            if (navAdminSettings) navAdminSettings.style.display = 'block'; // New
+        }
+
+        // Welcome message if no chat history
+        if (!activeSessionId && messagesContainer) {
             messagesContainer.innerHTML = `
-                <div class="message system">
-                    <div class="avatar">AG</div>
-                    <div class="content">
-                        Hello ${user.username}! I am your Agent. How can I help you today?
-                    </div>
-                </div>`;
+            <div class="message system">
+                <div class="avatar">AG</div>
+                <div class="content">
+                    Hello ${user.username}! Create a new chat to start.
+                </div>
+            </div>`;
         }
     }
 
@@ -173,60 +172,153 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Handle Enter Key
     // 监听 "回车键" 按下事件
-    userInput.addEventListener('keydown', (e) => {
-        // If Enter is pressed WITHOUT Shift (Send)
-        // 如果按下了回车，且没有按 Shift（ Shift+Enter 是换行）
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault(); // Don't add a new line / 不要在输入框里换行
-            sendMessage(); // Send the message / 发送消息
-        }
-    });
+    // --- Event Listeners / 事件监听器 ---
 
-    sendBtn.addEventListener('click', sendMessage);
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendMessage);
+    }
 
-    newChatBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        await createNewSession();
-    });
+    if (userInput) {
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', () => {
+            // ... new chat logic
+            // For now, new chat just reloads with no session? 
+            // Or calls createNewSession
+            createNewSession();
+        });
+    }
 
     async function loadSessions() {
         try {
             const data = await authFetch('/sessions');
-            // Check if array or object from wrapper
-            // authFetch returns json object if json content-type
+            const sessions = data.sessions || [];
 
-            sessionListEl.innerHTML = '';
-            if (data && data.sessions) {
-                if (data.current_session_id) activeSessionId = data.current_session_id;
-                data.sessions.forEach(sess => {
-                    const a = document.createElement('a');
-                    a.href = '#';
-                    a.dataset.id = sess.id;
-                    const date = new Date(sess.timestamp * 1000);
-                    const timeStr = date.toLocaleString();
+            // Set active session if not set locally but provided by server
+            if (!activeSessionId && data.current_session_id) {
+                activeSessionId = data.current_session_id;
+            }
 
-                    a.innerHTML = `<div style="font-weight:500">Session ${sess.id.substring(9)}</div><div style="font-size:0.7em; color:var(--text-dim)">${timeStr}</div>`;
+            if (sessionListEl) {
+                sessionListEl.innerHTML = '';
 
-                    if (sess.id === data.current_session_id) {
-                        a.classList.add('active');
+                if (sessions.length === 0) {
+                    sessionListEl.innerHTML = '<div style="padding:10px; color:#666; font-size:0.9em; text-align:center;">No history</div>';
+                    return;
+                }
+
+                sessions.forEach(session => {
+                    const div = document.createElement('div');
+                    div.className = 'session-item';
+                    div.dataset.id = session.id;
+
+                    // Active state
+                    if (session.id === activeSessionId) {
+                        div.classList.add('active');
                     }
 
-                    a.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        switchSession(sess.id);
-                    });
+                    // Session Title
+                    const titleSpan = document.createElement('span');
+                    titleSpan.className = 'session-title';
+                    titleSpan.textContent = session.title || "Session " + session.id.substring(0, 8);
+                    titleSpan.onclick = () => switchSession(session.id); // Click title to load
 
-                    sessionListEl.appendChild(a);
+                    // Three Dots Menu Trigger
+                    const menuTrigger = document.createElement('div');
+                    menuTrigger.className = 'session-menu-trigger';
+                    menuTrigger.innerHTML = '⋮';
+                    menuTrigger.onclick = (e) => {
+                        e.stopPropagation();
+                        toggleSessionMenu(session.id);
+                    };
+
+                    // Context Menu (Hidden by default)
+                    const menu = document.createElement('div');
+                    menu.className = 'session-context-menu';
+                    menu.id = `session-menu-${session.id}`;
+
+                    // Inline Delete Confirmation
+                    const deleteBtn = document.createElement('div');
+                    deleteBtn.className = 'context-menu-item danger delete-btn';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (deleteBtn.textContent === 'Delete') {
+                            deleteBtn.textContent = 'Confirm?';
+                            deleteBtn.style.background = 'var(--error)';
+                            deleteBtn.style.color = 'white';
+                        } else {
+                            deleteSession(session.id);
+                        }
+                    };
+
+                    menu.appendChild(deleteBtn);
+
+                    div.appendChild(titleSpan);
+                    div.appendChild(menuTrigger);
+                    div.appendChild(menu);
+                    sessionListEl.appendChild(div);
                 });
             }
         } catch (e) {
-            console.error("Failed to load sessions", e);
+            console.error("Failed to load sessions:", e);
         }
     }
 
+    function toggleSessionMenu(sessionId) {
+        // Close all other menus
+        document.querySelectorAll('.session-context-menu').forEach(el => {
+            if (el.id !== `session-menu-${sessionId}`) {
+                el.style.display = 'none';
+                resetDeleteButtons(el);
+            }
+        });
+
+        const menu = document.getElementById(`session-menu-${sessionId}`);
+        if (menu.style.display === 'block') {
+            menu.style.display = 'none';
+            resetDeleteButtons(menu);
+        } else {
+            menu.style.display = 'block';
+        }
+    }
+
+    function resetDeleteButtons(menu) {
+        if (!menu) return;
+        const btn = menu.querySelector('.delete-btn');
+        if (btn) {
+            btn.textContent = 'Delete';
+            btn.style.background = '';
+            btn.style.color = '';
+        }
+    }
+
+    // Close menus when clicking elsewhere
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.session-menu-trigger')) {
+            document.querySelectorAll('.session-context-menu').forEach(el => {
+                el.style.display = 'none';
+                resetDeleteButtons(el);
+            });
+        }
+    });
+
     async function createNewSession() {
         try {
-            await authFetch('/sessions/new', { method: 'POST' });
+            const data = await authFetch('/sessions/new', { method: 'POST' });
             // Clear UI
             messagesContainer.innerHTML = `
                 <div class="message system">
@@ -237,10 +329,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
             // Refresh list
             loadSessions();
+
+            // Auto switch to it
+            activeSessionId = data.id;
         } catch (e) {
             console.error(e);
         }
     }
+
+    async function deleteSession(sid) {
+        try {
+            await authFetch(`/sessions/${sid}`, { method: 'DELETE' });
+
+            // If we deleted the active session, clear the screen
+            if (sid === activeSessionId) {
+                messagesContainer.innerHTML = '';
+                activeSessionId = null;
+                messagesContainer.innerHTML = `
+                <div class="message system">
+                    <div class="avatar">AG</div>
+                    <div class="content">
+                        Session deleted. Please create or select a session.
+                    </div>
+                </div>`;
+            }
+
+            loadSessions();
+        } catch (e) {
+            console.error(e);
+            alert("Failed to delete session: " + e.message);
+        }
+    }
+
 
     async function switchSession(sid) {
         try {
@@ -249,10 +369,12 @@ document.addEventListener('DOMContentLoaded', () => {
             activeSessionId = sid;
 
             // Clear UI
-            messagesContainer.innerHTML = '';
+            if (messagesContainer) {
+                messagesContainer.innerHTML = '';
+            }
 
             // Render History
-            if (data.history) {
+            if (data.history && messagesContainer) {
                 data.history.forEach(msg => {
                     renderHistoryMessage(msg);
                 });
@@ -267,6 +389,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderHistoryMessage(msg) {
+        if (!messagesContainer) return;
+
         if (msg.role === 'user') {
             addMessage('user', msg.content);
 

@@ -127,6 +127,7 @@ class UserBase(BaseModel):
         - 遵循 DRY 原则（Don't Repeat Yourself）
     """
     username: str  # 用户名
+    email: Optional[str] = None  # 邮箱
 
 
 class UserCreate(UserBase):
@@ -152,6 +153,7 @@ class UserCreate(UserBase):
         POST /auth/users
         {
             "username": "newuser",
+            "email": "newuser@example.com", # 可选
             "password": "secure123",
             "role": "user"  # 可选，默认为 "user"
         }
@@ -165,6 +167,64 @@ class UserCreate(UserBase):
     role: UserRole = UserRole.USER   # 用户角色，默认为普通用户
 
 
+class UserUpdate(BaseModel):
+    """
+    用户更新模式。
+    
+    用于更新用户部分信息时的请求数据验证。
+    所有字段均为可选，表示可以只更新部分信息。
+    
+    属性:
+        email (Optional[str]): 邮箱
+            - 可选，如果提供则更新邮箱
+        role (Optional[UserRole]): 用户角色
+            - 可选，如果提供则更新角色
+            - 通常只有管理员可以修改
+        is_active (Optional[bool]): 是否激活
+            - 可选，如果提供则更新激活状态
+            - 通常只有管理员可以修改
+            
+    请求示例:
+        PATCH /users/{user_id}
+        {
+            "email": "updated@example.com",
+            "is_active": false
+        }
+    """
+    email: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+    avatar_url: Optional[str] = None
+
+
+class UserPasswordUpdate(BaseModel):
+    """
+    用户修改密码模式。
+    """
+    current_password: str
+    new_password: str
+
+
+class PasswordReset(BaseModel):
+    """
+    密码重置模式。
+    
+    用于用户重置密码时的请求数据验证。
+    
+    属性:
+        new_password (str): 新密码
+            - 用户提供的新密码
+            - 会被哈希后存储
+            
+    请求示例:
+        POST /auth/reset-password
+        {
+            "new_password": "new_secure_password"
+        }
+    """
+    new_password: str
+
+
 class User(UserBase):
     """
     用户响应模式。
@@ -176,6 +236,7 @@ class User(UserBase):
     
     属性:
         username (str): 用户名（继承自 UserBase）
+        email (Optional[str]): 邮箱（继承自 UserBase）
         
         id (int): 用户 ID
             - 唯一标识
@@ -206,9 +267,22 @@ class User(UserBase):
     id: int                # 用户 ID
     is_active: bool        # 是否激活
     role: UserRole         # 用户角色
+    avatar_url: Optional[str] = None # 头像 URL
 
     class Config:
         """Pydantic 配置类"""
         # 允许从 ORM 模型创建
         # 可以直接传入 User 数据库模型对象
+        from_attributes = True
+
+
+class SystemSettingBase(BaseModel):
+    key: str
+    value: str
+
+class SystemSettingCreate(SystemSettingBase):
+    pass
+
+class SystemSetting(SystemSettingBase):
+    class Config:
         from_attributes = True

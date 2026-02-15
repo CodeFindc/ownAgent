@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - OwnAgent</title>
+    <link rel="stylesheet" href="/static/style.css?v=5">
+    <style>
+        .profile-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .profile-card {
+            background: rgba(30, 30, 40, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .avatar-upload {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            cursor: pointer;
+        }
+
+        .avatar-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-color);
+            background: var(--sidebar-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--text-dim);
+            overflow: hidden;
+        }
+
+        .avatar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .avatar-upload:hover .avatar-overlay {
+            opacity: 1;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dim);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        .form-group input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon" id="logoIcon">AG</div>
+                <span id="logoText">OwnAgent</span>
+            </div>
+            <nav class="nav-links">
+                <a href="/" id="navMessages">Messages</a>
+                <a href="/static/admin_users.html" id="navUsers" style="display:none;">Users</a>
+                <a href="#" class="active">Profile</a>
+            </nav>
+            <div id="userProfile" class="user-profile-area">
+                <div class="user-avatar" id="userAvatarSidebar">U</div>
+                <div class="user-info">
+                    <div class="user-name" id="userNameSidebar">User</div>
+                    <div class="user-status">Online</div>
+                </div>
+                <!-- Dropdown Menu -->
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="/static/profile.html" class="dropdown-item active">My Profile</a>
+                    <a href="/static/admin_users.html" class="dropdown-item" id="navAdminUsers"
+                        style="display:none;">User Management</a>
+                    <a href="/static/admin_settings.html" class="dropdown-item" id="navAdminSettings"
+                        style="display:none;">Platform Settings</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" id="logoutBtn" class="dropdown-item danger">Logout</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <h1>My Profile</h1>
+            </header>
+
+            <div class="profile-container">
+                <div class="profile-card">
+                    <div class="avatar-upload" onclick="document.getElementById('avatarInput').click()">
+                        <div class="avatar-preview" id="avatarPreview">U</div>
+                        <img id="avatarImage" class="avatar-preview" style="display:none;" />
+                        <div class="avatar-overlay">Change</div>
+                        <input type="file" id="avatarInput" hidden accept="image/*">
+                    </div>
+
+                    <form id="profileForm">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="username" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email">
+                        </div>
+                        <!-- Password change could be added here later -->
+                        <button type="submit" class="primary-btn" style="width: 100%;">Save Profile Info</button>
+                    </form>
+
+                    <div
+                        style="margin-top: 30px; border-top: 1px solid var(--glass-border); padding-top: 20px; text-align: left;">
+                        <h3 style="margin-bottom: 15px;">Security</h3>
+                        <form id="passwordForm">
+                            <div class="form-group">
+                                <label>Current Password</label>
+                                <input type="password" id="currentPassword" required placeholder="Current Password">
+                            </div>
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input type="password" id="newPassword" required placeholder="New Password">
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm New Password</label>
+                                <input type="password" id="confirmNewPassword" required
+                                    placeholder="Confirm New Password">
+                            </div>
+                            <button type="submit" class="primary-btn warning" style="width: 100%;">Update
+                                Password</button>
+                        </form>
+                    </div>
+
+                    <div id="messageBox" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const form = document.getElementById('profileForm');
+            const passwordForm = document.getElementById('passwordForm');
+            const msgBox = document.getElementById('messageBox');
+            const avatarInput = document.getElementById('avatarInput');
+            const avatarPreview = document.getElementById('avatarPreview');
+            const avatarImage = document.getElementById('avatarImage');
+            const userStatus = document.querySelector('.user-status');
+
+            // Load User Data
+            if (currentUser) {
+                document.getElementById('username').value = currentUser.username;
+                document.getElementById('email').value = currentUser.email || '';
+
+                // Show Role
+                if (userStatus) {
+                    userStatus.textContent = `${currentUser.role.toUpperCase()} • Online`;
+                }
+
+                if (currentUser.avatar_url) {
+                    avatarPreview.style.display = 'none';
+                    avatarImage.style.display = 'flex';
+                    avatarImage.src = currentUser.avatar_url;
+                } else {
+                    avatarPreview.textContent = currentUser.username.charAt(0).toUpperCase();
+                }
+            }
+
+            // Avatar Upload
+            avatarInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    msgBox.textContent = "Uploading...";
+                    msgBox.style.color = "var(--text-dim)";
+
+                    const token = localStorage.getItem('access_token');
+                    const uploadRes = await fetch('/auth/upload/avatar', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    if (!uploadRes.ok) throw new Error("Upload failed");
+                    const data = await uploadRes.json();
+
+                    // Initial preview
+                    avatarImage.src = data.url;
+                    avatarImage.style.display = 'block';
+                    avatarPreview.style.display = 'none';
+
+                    // Update User Profile with new URL immediately
+                    await authFetch(`/auth/users/${currentUser.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ avatar_url: data.url })
+                    });
+
+                    msgBox.textContent = "Avatar updated!";
+                    msgBox.style.color = "var(--success)";
+
+                    // Refresh page or auth status to update sidebar
+                    checkAuthStatus();
+
+                } catch (err) {
+                    console.error(err);
+                    msgBox.textContent = "Error uploading avatar.";
+                    msgBox.style.color = "var(--error)";
+                }
+            });
+
+            // Save Profile Info
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                msgBox.textContent = "Saving info...";
+                msgBox.style.color = "var(--text-dim)";
+
+                const email = document.getElementById('email').value;
+
+                try {
+                    await authFetch(`/auth/users/${currentUser.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+
+                    msgBox.textContent = "Profile info saved!";
+                    msgBox.style.color = "var(--success)";
+                    checkAuthStatus(); // Refresh local user data
+                } catch (err) {
+                    console.error(err);
+                    msgBox.textContent = "Error saving profile.";
+                    msgBox.style.color = "var(--error)";
+                }
+            });
+
+            // Change Password
+            passwordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+                if (newPassword !== confirmNewPassword) {
+                    msgBox.textContent = "New passwords do not match.";
+                    msgBox.style.color = "var(--error)";
+                    return;
+                }
+
+                try {
+                    msgBox.textContent = "Updating password...";
+                    msgBox.style.color = "var(--text-dim)";
+
+                    await authFetch('/auth/users/me/password', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            current_password: currentPassword,
+                            new_password: newPassword
+                        })
+                    });
+
+                    msgBox.textContent = "Password updated successfully!";
+                    msgBox.style.color = "var(--success)";
+                    document.getElementById('passwordForm').reset();
+                } catch (err) {
+                    console.error(err);
+                    // Try to parse error message
+                    msgBox.textContent = "Failed to update password. Check current password.";
+                    msgBox.style.color = "var(--error)";
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

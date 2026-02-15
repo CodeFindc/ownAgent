@@ -137,13 +137,31 @@ class User(Base):
     
     # 用户名 - 唯一约束，建立索引加速查询
     username = Column(String, unique=True, index=True)
+    # 新增邮箱字段
+    email = Column(String, unique=True, index=True, nullable=True)
+    # 头像 URL
+    avatar_url = Column(String, nullable=True)
     
     # 密码哈希值 - 存储哈希后的密码，而非明文
     # 安全原则：永远不要存储明文密码
     hashed_password = Column(String)
-    
+
     # 是否激活 - 默认为 True，可用于禁用用户
     is_active = Column(Boolean, default=True)
     
     # 用户角色 - 默认为普通用户
-    role = Column(String, default=UserRole.USER)
+    role = Column(Enum(UserRole), default=UserRole.USER)
+
+
+class SystemSetting(Base):
+    """
+    系统设置模型
+    
+    存储全系统的键值对配置，如:
+    - site_logo: 网站 Logo URL
+    - site_name: 网站名称
+    """
+    __tablename__ = "system_settings"
+
+    key = Column(String, primary_key=True, index=True)
+    value = Column(String)

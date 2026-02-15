@@ -44,6 +44,7 @@ import json         # JSON 数据处理，用于 SSE 事件数据
 import asyncio      # 异步 I/O，用于异步生成器
 from pathlib import Path  # 面向对象的文件路径处理
 from datetime import datetime  # 日期时间处理，用于生成会话 ID
+import re  # 正则表达式，用于安全检查
 
 # =============================================================================
 # 第三方库导入
@@ -53,7 +54,7 @@ from dotenv import load_dotenv  # 从 .env 文件加载环境变量
 from typing import AsyncGenerator, Dict, Any, Optional  # 类型提示
 
 # FastAPI 相关导入
-from fastapi import FastAPI, Request, Depends  # Web 框架核心
+from fastapi import FastAPI, Request, Depends, HTTPException  # Web 框架核心
 from fastapi.responses import StreamingResponse, FileResponse  # 响应类型
 from fastapi.staticfiles import StaticFiles  # 静态文件服务
 from fastapi.middleware.cors import CORSMiddleware  # CORS 中间件
@@ -184,6 +185,11 @@ static_dir.mkdir(exist_ok=True)
 # 这样 /static/app.js 会映射到 static/app.js 文件
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Mount user uploaded images
+# Mount user uploaded images
+# user_images_dir = os.path.join("static", "userimages")
+# os.makedirs(user_images_dir, exist_ok=True)
+# app.mount("/static/userimages", StaticFiles(directory=user_images_dir), name="userimages")
 
 # =============================================================================
 # 会话存储配置
@@ -589,6 +595,51 @@ async def load_session(session_id: str, current_user: auth_models.User = Depends
     # 返回历史消息（跳过系统提示词）
     msgs = runtime.context.history[1:] if len(runtime.context.history) > 0 else []
     return {"id": session_id, "history": msgs}
+
+
+@app.delete("/sessions/{session_id}")
+async def delete_session(session_id: str, current_user: auth_models.User = Depends(auth_deps.get_current_active_user)):
+    """
+    删除会话。
+    
+    需要认证：是
+    必须校验记录路径安全性，防止误删系统其他路径文件。
+    
+    参数:
+        session_id (str): 会话 ID
+        current_user: 当前登录用户
+    """
+    # 1. 安全性检查：验证 Session ID 格式
+    # 只允许字母、数字、下划线、连字符
+    # 防止路径遍历攻击 (如 ../../etc/passwd)
+    if not re.match(r"^[a-zA-Z0-9_-]+$", session_id):
+        raise HTTPException(
+            status_code=400, 
+            detail="Invalid session ID format. Only alphanumeric characters, underscores, and hyphens are allowed."
+        )
+    
+    # 2. 获取文件路径
+    # 使用 get_session_path (包含 user_id 前缀)，确保只能访问自己的文件
+    path = get_session_path(current_user.id, session_id)
+    
+    # 3. 检查文件是否存在
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    try:
+        # 4. 删除文件
+        os.remove(path)
+        
+        # 5. 如果是当前活跃会话，清除活跃状态
+        if active_sessions.get(current_user.id) == session_id:
+            active_sessions.pop(current_user.id, None)
+            
+        return {"message": "Session deleted successfully"}
+        
+    except Exception as e:
+        # 记录错误并返回 500
+        print(f"Error deleting session: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during deletion")
 
 
 # -----------------------------------------------------------------------------

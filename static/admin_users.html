@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Agentic AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Custom styles for Admin Page */
+        .admin-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: radial-gradient(circle at 50% 10%, #1f1f2e 0%, var(--bg-color) 40%);
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 20px;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--glass-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .user-table th {
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .user-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(61, 214, 140, 0.15);
+            color: var(--success);
+        }
+
+        .status-inactive {
+            background: rgba(255, 92, 92, 0.15);
+            color: var(--error);
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--glass-border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            margin-right: 6px;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 92, 92, 0.2);
+            color: var(--error);
+            border-color: rgba(255, 92, 92, 0.4);
+        }
+
+        /* Modal tweaks */
+        .modal-content {
+            max-width: 500px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-container">
+        <!-- Reusing Sidebar structure but simplified -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">AG</div>
+                <span>Admin Panel</span>
+            </div>
+            <nav class="nav-links">
+                <a href="/" style="display: flex; align-items: center; gap: 10px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    Back to Chat
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="header-actions">
+                <h1>User Management</h1>
+                <button id="btnAddNew" class="primary-btn" style="width: auto; padding: 10px 20px;">+ Add New
+                    User</button>
+            </div>
+
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <!-- Rows injected by JS -->
+                </tbody>
+            </table>
+        </main>
+    </div>
+
+    <!-- Edit/Create User Modal -->
+    <div id="userModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add User</h2>
+            <form id="userForm">
+                <input type="hidden" name="id">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Email (Optional)</label>
+                    <input type="email" name="email">
+                </div>
+                <div class="form-group" id="passwordGroup">
+                    <label>Password</label>
+                    <input type="password" name="password">
+                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Leave blank to keep
+                        unchanged (during edit)</div>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select name="role"
+                        style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; border-radius: 8px;">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <!-- Is Active Checkbox for Edit -->
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <label style="margin: 0;">Active Account</label>
+                    <input type="checkbox" name="is_active" checked style="width: auto;">
+                </div>
+
+                <div id="formMessage" style="margin-bottom: 10px;"></div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="primary-btn">Save</button>
+                    <button type="button" class="primary-btn"
+                        style="background: transparent; border: 1px solid var(--glass-border);"
+                        onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="resetPwdModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Reset Password</h2>
+            <form id="resetPwdForm">
+                <input type="hidden" name="user_id">
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" name="new_password" required>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="primary-btn">Reset</button>
+                    <button type="button" class="primary-btn"
+                        style="background: transparent; border: 1px solid var(--glass-border);"
+                        onclick="document.getElementById('resetPwdModal').style.display='none'">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/admin_users.js"></script>
+</body>
+
+</html>

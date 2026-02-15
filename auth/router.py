@@ -31,14 +31,16 @@ API 设计说明：
 # 标准库导入
 # =============================================================================
 
-from datetime import timedelta  # 时间间隔计算
+from datetime import timedelta
+from typing import Annotated, List, Optional
+import os
 
 # =============================================================================
 # 第三方库导入
 # =============================================================================
 
-from fastapi import APIRouter, Depends, HTTPException, status  # FastAPI 核心组件
-from fastapi.security import OAuth2PasswordRequestForm  # OAuth2 表单数据
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session  # SQLAlchemy 会话类型
 
 # =============================================================================
@@ -289,6 +291,80 @@ async def create_user(
     return db_user
 
 
+@router.put("/users/me/password", response_model=schemas.User)
+async def update_password(
+    password_update: schemas.UserPasswordUpdate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(dependencies.get_current_active_user)
+):
+    """
+    修改当前用户密码。
+    """
+    # 验证当前密码
+    if not security.verify_password(password_update.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+    
+    # 更新密码
+    current_user.hashed_password = security.get_password_hash(password_update.new_password)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/register", response_model=schemas.User)
+async def register(
+    user: schemas.UserCreate,
+    db: Session = Depends(database.get_db)
+):
+    """
+    用户注册（公开端点）。
+    
+    允许任何人注册新用户。
+    强制角色为 USER，不能注册 ADMIN。
+    
+    请求格式:
+        POST /auth/register
+        {
+            "username": "newuser",
+            "password": "password123"
+        }
+    """
+    # Check if registration is allowed
+    setting = db.query(models.SystemSetting).filter(models.SystemSetting.key == "allow_registration").first()
+    if setting and setting.value.lower() == "false":
+        raise HTTPException(status_code=403, detail="Registration is currently disabled")
+    # 检查用户名是否已存在
+    db_user = db.query(models.User).filter(
+        models.User.username == user.username
+    ).first()
+    
+    if db_user:
+        raise HTTPException(
+            status_code=400, 
+            detail="Username already registered"
+        )
+    
+    # 强制角色为普通用户，防止通过 API 注册管理员
+    user_role = models.UserRole.USER
+    
+    # 哈希密码
+    hashed_password = security.get_password_hash(user.password)
+    
+    # 创建用户对象
+    db_user = models.User(
+        username=user.username,
+        email=user.email,  # 新增邮箱
+        hashed_password=hashed_password,
+        role=user_role
+    )
+    
+    # 保存到数据库
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
 # =============================================================================
 # 数据库初始化函数
 # =============================================================================
@@ -392,6 +468,144 @@ async def delete_user(
     db.commit()
     
     return {"message": "User deleted successfully"}
+
+
+@router.get("/users", response_model=list[schemas.User])
+async def list_users(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(dependencies.get_current_admin_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    获取所有用户列表（仅管理员）。
+    """
+    users = db.query(models.User).offset(skip).limit(limit).all()
+    return users
+
+
+@router.put("/users/{user_id}", response_model=schemas.User)
+async def update_user(
+    user_id: int,
+    user_update: schemas.UserUpdate,
+    # current_user: models.User = Depends(dependencies.get_current_admin_user), # Modified to allow users to update themselves
+    current_user: models.User = Depends(dependencies.get_current_active_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    更新用户信息 (管理员或用户自己)
+    
+    - 管理员可以更新任何用户
+    - 用户只能更新自己
+    """
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    # Check permissions
+    if current_user.role != models.UserRole.ADMIN and current_user.id != user_id:
+         raise HTTPException(status_code=403, detail="Not authorized to update this user")
+
+    update_data = user_update.dict(exclude_unset=True)
+    
+    # Prevent non-admins from changing role or active status
+    if current_user.role != models.UserRole.ADMIN:
+        if "role" in update_data:
+            del update_data["role"]
+        if "is_active" in update_data:
+            del update_data["is_active"]
+            
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
+        
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+@router.post("/users/{user_id}/reset_password", response_model=schemas.User)
+async def reset_password(
+    user_id: int,
+    password_reset: schemas.PasswordReset,
+    current_user: models.User = Depends(dependencies.get_current_admin_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    重置用户密码（仅管理员）。
+    """
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    hashed_password = security.get_password_hash(password_reset.new_password)
+    db_user.hashed_password = hashed_password
+    
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+@router.post("/upload/avatar")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(dependencies.get_current_active_user),
+):
+    """
+    上传用户头像
+    """
+    # 验证文件类型
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    # 创建目录
+    upload_dir = "static/userimages"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # 生成文件名 (uuid + 扩展名)
+    file_ext = os.path.splitext(file.filename)[1]
+    if not file_ext:
+        file_ext = ".png" # 默认 png
+        
+    import uuid
+    filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = os.path.join(upload_dir, filename)
+    
+    # 保存文件
+    with open(file_path, "wb") as buffer:
+        import shutil
+        shutil.copyfileobj(file.file, buffer)
+        
+    # 返回 URL (相对路径)
+    url = f"/static/userimages/{filename}"
+    return {"url": url}
+
+
+@router.get("/settings", response_model=List[schemas.SystemSetting])
+async def get_settings(
+    db: Session = Depends(database.get_db),
+    # current_user: models.User = Depends(dependencies.get_current_active_user) # 可选：是否只有登录用户才能获取？目前公开方便前端加载Logo
+):
+    """获取所有系统设置"""
+    return db.query(models.SystemSetting).all()
+
+
+@router.put("/settings", response_model=schemas.SystemSetting)
+async def update_setting(
+    setting: schemas.SystemSettingCreate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(dependencies.get_current_admin_user)
+):
+    """更新系统设置 (管理员)"""
+    db_setting = db.query(models.SystemSetting).filter(models.SystemSetting.key == setting.key).first()
+    if db_setting:
+        db_setting.value = setting.value
+    else:
+        db_setting = models.SystemSetting(key=setting.key, value=setting.value)
+        db.add(db_setting)
+        
+    db.commit()
+    db.refresh(db_setting)
+    return db_setting
 
 
 @router.put("/users/{user_id}/deactivate")

@@ -8,14 +8,27 @@
     <!-- Fonts replaced by system fonts for offline usage -->
     <link rel="stylesheet" href="/static/style.css?v=4">
 </head>
+<script>
+    window.onerror = function (msg, url, line, col, error) {
+        alert("Global Error: " + msg + "\nURL: " + url + "\nLine: " + line);
+        // Remove loader just in case so they can see something (or nothing)
+        const loader = document.getElementById('app-loading');
+        if (loader) loader.style.display = 'none';
+        return false;
+    };
+</script>
 
 <body>
+    <div id="app-loading"
+        style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0d0d12;color:white;z-index:9999;display:flex;justify-content:center;align-items:center;font-family:sans-serif;font-size:24px;">
+        Loading Application...
+    </div>
     <div class="app-container">
         <!-- Sidebar (Optional, placeholder for future) -->
         <aside class="sidebar">
             <div class="logo">
                 <div class="logo-icon">AG</div>
-                <span>Antigravity</span>
+                <span>OwnAgent</span>
             </div>
             <nav class="nav-links">
                 <a href="#" class="active" id="newChatBtn">New Chat</a>
@@ -27,10 +40,25 @@
                 <!-- Sessions injected here -->
             </div>
 
+
             <!-- User Profile (Bottom of Sidebar) -->
-            <div id="userProfile" style="border-top: 1px solid rgba(255,255,255,0.1); padding: 16px; display: none;">
-                <div style="font-weight: bold; margin-bottom: 5px;" id="userNameDisplay">User</div>
-                <a href="#" id="logoutBtn" style="color: #ff5c5c; font-size: 0.9rem; text-decoration: none;">Logout</a>
+            <div id="userProfile" class="user-profile-area" style="display: none;">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <div class="user-info">
+                    <div class="user-name" id="userNameDisplay">User</div>
+                    <div class="user-status">Online</div>
+                </div>
+
+                <!-- Dropdown Menu -->
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="/static/profile.html" class="dropdown-item">My Profile</a>
+                    <a href="/static/admin_users.html" class="dropdown-item" id="navAdminUsers"
+                        style="display:none;">User Management</a>
+                    <a href="/static/admin_settings.html" class="dropdown-item" id="navAdminSettings"
+                        style="display:none;">Platform Settings</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" id="logoutBtn" class="dropdown-item danger">Logout</a>
+                </div>
             </div>
         </aside>
 
@@ -46,7 +74,7 @@
                 <div class="message system">
                     <div class="avatar">AG</div>
                     <div class="content">
-                        Hello! I am your Agent. Please login to continue.
+                        Hello! I am your Agent.
                     </div>
                 </div>
             </div>
@@ -61,25 +89,6 @@
                 </button>
             </div>
         </main>
-    </div>
-
-    <!-- Login Modal -->
-    <div id="loginModal" class="modal-overlay">
-        <div class="modal-content">
-            <h2>Login</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                <div id="loginError" style="color: #ff5c5c; margin-bottom: 10px; font-size: 0.9rem;"></div>
-                <button type="submit" class="primary-btn">Login</button>
-            </form>
-        </div>
     </div>
 
     <!-- Templates for JS to clone -->
